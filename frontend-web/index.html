@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Content Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>AI Content Studio</h1>
+    <p class="subtitle">快速生成你的营销文案</p>
+
+    <section class="card">
+      <label for="topic">主题</label>
+      <input id="topic" type="text" placeholder="例如：咖啡杯">
+
+      <label for="platform">平台</label>
+      <select id="platform">
+        <option value="小红书">小红书</option>
+        <option value="抖音">抖音</option>
+        <option value="微信公众号">微信公众号</option>
+      </select>
+
+      <label for="style">风格</label>
+      <select id="style">
+        <option value="种草">种草</option>
+        <option value="专业">专业</option>
+        <option value="幽默">幽默</option>
+        <option value="文艺">文艺</option>
+      </select>
+
+      <button id="generate-button">生成文案</button>
+    </section>
+
+    <section class="card result-card">
+      <h2>生成结果</h2>
+      <p id="result">请填写主题，然后点击“生成文案”。</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
