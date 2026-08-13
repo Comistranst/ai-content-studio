@@ -1,3 +1,5 @@
+console.log("app.js 已成功加载");
+
 const generateButton = document.getElementById("generate-button");
 const topicInput = document.getElementById("topic");
 const platformSelect = document.getElementById("platform");
@@ -5,12 +7,14 @@ const styleSelect = document.getElementById("style");
 const resultElement = document.getElementById("result");
 
 generateButton.addEventListener("click", async () => {
+  console.log("生成按钮已点击");
+
   const topic = topicInput.value.trim();
   const platform = platformSelect.value;
   const style = styleSelect.value;
 
   if (!topic) {
-    resultElement.textContent = "请输入一个主题，例如：咖啡杯。";
+    resultElement.textContent = "请输入一个主题，例如：瑜伽垫。";
     return;
   }
 
@@ -25,9 +29,9 @@ generateButton.addEventListener("click", async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        topic,
-        platform,
-        style,
+        topic: topic,
+        platform: platform,
+        style: style,
       }),
     });
 
@@ -39,6 +43,7 @@ generateButton.addEventListener("click", async () => {
 
     resultElement.textContent = result.data.content;
   } catch (error) {
+    console.error(error);
     resultElement.textContent =
       "无法连接后端。请确认 FastAPI 服务正在运行。";
   } finally {
