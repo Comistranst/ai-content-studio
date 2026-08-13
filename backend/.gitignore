@@ -1,0 +1,19 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 虚拟环境
+.venv/
+venv/
+
+# 环境变量和密钥
+.env
+
+# 测试与覆盖率文件
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 编辑器与系统临时文件
+.DS_Store
+Thumbs.db
