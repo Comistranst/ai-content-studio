@@ -1,3 +1,4 @@
+
 # AI Content Studio
 
 > A lightweight AI content creation tool built with FastAPI and JavaScript.
