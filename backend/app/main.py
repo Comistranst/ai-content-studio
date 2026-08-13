@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+
 app = FastAPI(
     title="AI Content Studio API",
     version="0.1.0",
@@ -37,9 +38,11 @@ def health_check():
 @app.post("/api/generate")
 def generate_content(request: GenerateRequest):
     content = (
-        f"发现一只让{request.topic}更有仪式感的好物！"
-        f"为你打造适合{request.platform}的{request.style}文案："
-        f"简约好看又实用，值得认真体验。"
+        f"最近在认真研究「{request.topic}」，"
+        f"发现它真的能提升日常体验。\n\n"
+        f"如果你也在关注{request.topic}，"
+        f"不妨从自己的实际需求出发，挑选更适合自己的选择。\n\n"
+        f"适合分享在{request.platform}，整体采用{request.style}风格。"
     )
 
     return {
