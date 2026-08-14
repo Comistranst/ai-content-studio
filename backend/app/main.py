@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from app.database import init_database, save_generation
+from app.database import (
+    get_generation_history,
+    init_database,
+    save_generation,
+)
 
 app = FastAPI(
     title="AI Content Studio API",
@@ -67,4 +71,12 @@ def generate_content(request: GenerateRequest):
             "style": request.style,
             "content": content,
         },
+    }
+@app.get("/api/history")
+def get_history():
+    records = get_generation_history()
+
+    return {
+        "success": True,
+        "data": records,
     }
