@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-
+from app.ai_service import generate_ai_content
 from app.database import (
     get_generation_history,
     init_database,
@@ -47,12 +47,10 @@ def health_check():
 
 @app.post("/api/generate")
 def generate_content(request: GenerateRequest):
-    content = (
-    f"最近在认真研究「{request.topic}」，"
-    f"发现它真的能提升日常体验。"
-    f"如果你也在关注{request.topic}，"
-    f"不妨从自己的实际需求出发，挑选更适合自己的选择。"
-    f"适合分享在{request.platform}，整体采用{request.style}风格。"
+    content = generate_ai_content(
+        topic=request.topic,
+        platform=request.platform,
+        style=request.style,
     )
 
     generation_id = save_generation(
