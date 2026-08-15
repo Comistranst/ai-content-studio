@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from app.ai_service import generate_ai_content
@@ -47,11 +47,19 @@ def health_check():
 
 @app.post("/api/generate")
 def generate_content(request: GenerateRequest):
-    content = generate_ai_content(
-        topic=request.topic,
-        platform=request.platform,
-        style=request.style,
-    )
+    try:
+        content = generate_ai_content(
+            topic=request.topic,
+            platform=request.platform,
+            style=request.style,
+        )
+    except Exception as error:
+        print(f"AI generation error: {error}")
+
+        raise HTTPException(
+            status_code=502,
+            detail="AI 文案生成失败，请稍后重试。",
+        )
 
     generation_id = save_generation(
         topic=request.topic,
