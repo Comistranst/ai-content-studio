@@ -58,3 +58,15 @@ def get_generation_history(limit: int = 10, offset: int = 0):
 
         rows = cursor.fetchall()
         return [dict(row) for row in rows]
+
+def delete_generation(generation_id: int) -> bool:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            DELETE FROM generation_history
+            WHERE id = ?
+            """,
+            (generation_id,),
+        )
+
+        return cursor.rowcount > 0

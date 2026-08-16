@@ -144,3 +144,49 @@ button:disabled {
   line-height: 1.8;
   white-space: pre-wrap;
 }
+
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.copy-button {
+  width: auto;
+  min-height: 34px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 14px;
+}
+
+.copy-button:hover {
+  background: #dbeafe;
+}
+
+.history-actions {
+  gap: 10px;
+}
+
+.delete-button {
+  width: auto;
+  min-height: 34px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.delete-button:hover {
+  background: #fee2e2;
+}
+
+.delete-button:disabled {
+  background: #fecaca;
+  color: #7f1d1d;
+}

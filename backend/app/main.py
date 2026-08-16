@@ -6,6 +6,7 @@ from app.database import (
     get_generation_history,
     init_database,
     save_generation,
+    delete_generation,
 )
 
 app = FastAPI(
@@ -97,5 +98,23 @@ def get_history(
             "limit": limit,
             "offset": offset,
             "count": len(records),
+        },
+    }
+
+@app.delete("/api/history/{generation_id}")
+def delete_history(generation_id: int):
+    deleted = delete_generation(generation_id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="历史记录不存在或已经删除。",
+        )
+
+    return {
+        "success": True,
+        "message": "历史记录已删除。",
+        "data": {
+            "id": generation_id,
         },
     }

@@ -40,7 +40,76 @@ function createHistoryItem(record) {
   content.className = "history-content";
   content.textContent = record.content;
 
-  item.append(meta, topic, content);
+  const actions = document.createElement("div");
+  actions.className = "history-actions";
+
+  const copyButton = document.createElement("button");
+  copyButton.className = "copy-button";
+  copyButton.type = "button";
+  copyButton.textContent = "复制文案";
+
+  copyButton.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(record.content);
+
+      copyButton.textContent = "已复制";
+
+      setTimeout(() => {
+        copyButton.textContent = "复制文案";
+      }, 1500);
+    } catch (error) {
+      console.error(error);
+      copyButton.textContent = "复制失败";
+
+      setTimeout(() => {
+        copyButton.textContent = "复制文案";
+      }, 1500);
+    }
+  });
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "delete-button";
+  deleteButton.type = "button";
+  deleteButton.textContent = "删除";
+
+  deleteButton.addEventListener("click", async () => {
+    const confirmed = window.confirm(
+      `确定删除“${record.topic}”这条历史记录吗？`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteButton.disabled = true;
+    deleteButton.textContent = "删除中...";
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/history/${record.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.detail || "删除历史记录失败。");
+      }
+
+      item.remove();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+
+      deleteButton.disabled = false;
+      deleteButton.textContent = "删除";
+    }
+  });
+
+  actions.append(copyButton, deleteButton);
+  item.append(meta, topic, content, actions);
 
   return item;
 }
