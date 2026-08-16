@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from app.ai_service import generate_ai_content
@@ -79,10 +79,21 @@ def generate_content(request: GenerateRequest):
         },
     }
 @app.get("/api/history")
-def get_history():
-    records = get_generation_history()
+def get_history(
+    limit: int = Query(default=10, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
+):
+    records = get_generation_history(
+        limit=limit,
+        offset=offset,
+    )
 
     return {
         "success": True,
         "data": records,
+        "pagination": {
+            "limit": limit,
+            "offset": offset,
+            "count": len(records),
+        },
     }

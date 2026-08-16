@@ -44,16 +44,16 @@ def save_generation(topic: str, platform: str, style: str, content: str):
             (topic, platform, style, content, created_at),
         )
         return cursor.lastrowid
-def get_generation_history(limit: int = 50):
+def get_generation_history(limit: int = 10, offset: int = 0):
     with get_connection() as connection:
         cursor = connection.execute(
             """
             SELECT id, topic, platform, style, content, created_at
             FROM generation_history
             ORDER BY id DESC
-            LIMIT ?
+            LIMIT ? OFFSET ?
             """,
-            (limit,),
+            (limit, offset),
         )
 
         rows = cursor.fetchall()
