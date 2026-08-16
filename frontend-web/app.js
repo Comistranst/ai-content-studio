@@ -20,7 +20,7 @@ generateButton.addEventListener("click", async () => {
 
   generateButton.disabled = true;
   generateButton.textContent = "生成中...";
-  resultElement.textContent = "正在请求后端生成文案...";
+  resultElement.textContent = "正在请求 AI 生成文案...";
 
   try {
     const response = await fetch("http://127.0.0.1:8000/api/generate", {
@@ -38,14 +38,13 @@ generateButton.addEventListener("click", async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error("后端返回了错误请求。");
+      throw new Error(result.detail || "生成文案时发生未知错误。");
     }
 
     resultElement.textContent = result.data.content;
   } catch (error) {
     console.error(error);
-    resultElement.textContent =
-      "无法连接后端。请确认 FastAPI 服务正在运行。";
+    resultElement.textContent = error.message;
   } finally {
     generateButton.disabled = false;
     generateButton.textContent = "生成文案";
