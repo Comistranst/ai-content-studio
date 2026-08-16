@@ -85,3 +85,62 @@ button:disabled {
   line-height: 1.8;
   white-space: pre-wrap;
 }
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.history-header h2 {
+  margin: 0;
+}
+
+.history-header button {
+  width: auto;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+#history-list {
+  margin-top: 20px;
+}
+
+.history-message {
+  margin: 0;
+  color: #6b7280;
+  text-align: center;
+}
+
+#load-more-button {
+  display: none;
+}
+
+
+.history-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.history-item:last-child {
+  border-bottom: 0;
+}
+
+.history-meta {
+  margin: 0 0 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.history-item h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.history-content {
+  margin: 0;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
