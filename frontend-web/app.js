@@ -7,6 +7,8 @@ const generateButton = document.getElementById("generate-button");
 const topicInput = document.getElementById("topic");
 const platformSelect = document.getElementById("platform");
 const styleSelect = document.getElementById("style");
+const audienceInput = document.getElementById("audience");
+const lengthSelect = document.getElementById("length");
 const resultElement = document.getElementById("result");
 
 const historyList = document.getElementById("history-list");
@@ -187,9 +189,11 @@ async function loadHistory({ reset = false } = {}) {
 }
 
 generateButton.addEventListener("click", async () => {
-  const topic = topicInput.value.trim();
-  const platform = platformSelect.value;
-  const style = styleSelect.value;
+const topic = topicInput.value.trim();
+const platform = platformSelect.value;
+const style = styleSelect.value;
+const audience = audienceInput.value.trim() || "普通用户";
+const length = lengthSelect.value;
 
   if (!topic) {
     resultElement.textContent = "请输入一个主题，例如：瑜伽垫。";
@@ -207,9 +211,11 @@ generateButton.addEventListener("click", async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        topic,
-        platform,
-        style,
+           topic,
+           platform,
+           style,
+           audience,
+           length,
       }),
     });
 

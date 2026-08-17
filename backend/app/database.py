@@ -1,6 +1,7 @@
 import sqlite3
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASE_PATH = BASE_DIR / "data" / "ai_content_studio.db"
@@ -10,6 +11,26 @@ def get_connection():
     connection = sqlite3.connect(DATABASE_PATH)
     connection.row_factory = sqlite3.Row
     return connection
+
+
+def ensure_column(
+    connection: sqlite3.Connection,
+    column_name: str,
+    column_definition: str,
+) -> None:
+    cursor = connection.execute(
+        "PRAGMA table_info(generation_history)"
+    )
+    existing_columns = {
+        row["name"]
+        for row in cursor.fetchall()
+    }
+
+    if column_name not in existing_columns:
+        connection.execute(
+            f"ALTER TABLE generation_history "
+            f"ADD COLUMN {column_definition}"
+        )
 
 
 def init_database():
@@ -29,26 +50,68 @@ def init_database():
             """
         )
 
+        ensure_column(
+            connection,
+            "audience",
+            "audience TEXT NOT NULL DEFAULT '普通用户'",
+        )
+        ensure_column(
+            connection,
+            "content_length",
+            "content_length TEXT NOT NULL DEFAULT 'medium'",
+        )
 
-def save_generation(topic: str, platform: str, style: str, content: str):
+
+def save_generation(
+    topic: str,
+    platform: str,
+    style: str,
+    audience: str,
+    content_length: str,
+    content: str,
+) -> int:
     created_at = datetime.now().isoformat(timespec="seconds")
 
     with get_connection() as connection:
         cursor = connection.execute(
             """
             INSERT INTO generation_history (
-                topic, platform, style, content, created_at
+                topic,
+                platform,
+                style,
+                audience,
+                content_length,
+                content,
+                created_at
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (topic, platform, style, content, created_at),
+            (
+                topic,
+                platform,
+                style,
+                audience,
+                content_length,
+                content,
+                created_at,
+            ),
         )
         return cursor.lastrowid
+
+
 def get_generation_history(limit: int = 10, offset: int = 0):
     with get_connection() as connection:
         cursor = connection.execute(
             """
-            SELECT id, topic, platform, style, content, created_at
+            SELECT
+                id,
+                topic,
+                platform,
+                style,
+                audience,
+                content_length,
+                content,
+                created_at
             FROM generation_history
             ORDER BY id DESC
             LIMIT ? OFFSET ?
@@ -58,6 +121,7 @@ def get_generation_history(limit: int = 10, offset: int = 0):
 
         rows = cursor.fetchall()
         return [dict(row) for row in rows]
+
 
 def delete_generation(generation_id: int) -> bool:
     with get_connection() as connection:

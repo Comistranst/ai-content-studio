@@ -43,14 +43,40 @@ PLATFORM_GUIDES = {
 }
 
 
+LENGTH_GUIDES = {
+    "short": (
+        "只写 60—100 个中文字符。"
+        "最多 2 个短段落，每段最多 2 句话。"
+        "不要解释背景，不要列举多个卖点，不要写结尾总结。"
+    ),
+    "medium": (
+        "写 180—300 个中文字符。"
+        "使用 2—3 个短段落，每段最多 3 句话。"
+        "只保留一个核心场景和 2—3 个重点。"
+    ),
+    "long": (
+        "写 400—650 个中文字符。"
+        "使用 4—5 个短段落。"
+        "可以包含场景、核心价值、细节与自然的结尾。"
+    ),
+}
+
+
 def build_copywriting_prompt(
     topic: str,
     platform: str,
     style: str,
+    audience: str,
+    length: str,
 ) -> str:
     platform_guide = PLATFORM_GUIDES.get(
         platform,
         PLATFORM_GUIDES["全平台通用"],
+    )
+
+    length_guide = LENGTH_GUIDES.get(
+        length,
+        LENGTH_GUIDES["medium"],
     )
 
     return f"""
@@ -61,15 +87,17 @@ def build_copywriting_prompt(
 主题：{topic}
 发布平台：{platform}
 内容风格：{style}
+目标受众：{audience}
 平台表达要求：{platform_guide}
+长度要求：{length_guide}
 
 要求：
 1. 紧扣主题，不要编造具体产品参数、优惠价格或虚假使用经历。
-2. 文案要符合指定的平台与风格。
-3. 内容有清晰重点，避免空泛的套话。
-4. 不要解释创作过程。
-5. 直接输出文案正文。
-6. 正文严格控制在 150—250 个中文字符以内。
-7. 使用 2—4 个短段落，不要写成长篇文章。
+2. 文案必须符合指定的平台、风格和目标受众。
+3. 长度要求优先级最高，必须严格执行；不要为了写完整而超出长度。
+4. 写完后先自行检查字数和段落数，再输出最终文案。
+5. 内容应有清晰重点，避免空泛套话。
+6. 不要解释创作过程。
+7. 直接输出可发布的文案正文。
 8. 不要使用 Markdown 标题、加粗符号（**）或“第一、第二、第三”式的长篇分点。
 """.strip()

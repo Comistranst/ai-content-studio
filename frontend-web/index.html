@@ -19,20 +19,50 @@
         placeholder="例如：瑜伽垫"
       >
 
-      <label for="platform">平台</label>
-      <select id="platform">
-        <option value="小红书">小红书</option>
-        <option value="抖音">抖音</option>
-        <option value="微信公众号">微信公众号</option>
-      </select>
+<label for="platform">发布平台</label>
+<select id="platform">
+  <option value="全平台通用" selected>全平台通用</option>
+  <option value="小红书">小红书</option>
+  <option value="抖音">抖音</option>
+  <option value="微信公众号">微信公众号</option>
+  <option value="视频号">视频号</option>
+  <option value="微博">微博</option>
+  <option value="知乎">知乎</option>
+  <option value="B站">B站</option>
+  <option value="快手">快手</option>
+  <option value="朋友圈">朋友圈</option>
+</select>
 
-      <label for="style">风格</label>
-      <select id="style">
-        <option value="种草">种草</option>
-        <option value="专业">专业</option>
-        <option value="幽默">幽默</option>
-        <option value="文艺">文艺</option>
-      </select>
+<label for="style">内容风格</label>
+<select id="style">
+  <option value="真实种草" selected>真实种草</option>
+  <option value="专业可信">专业可信</option>
+  <option value="轻松幽默">轻松幽默</option>
+  <option value="文艺治愈">文艺治愈</option>
+  <option value="简洁直接">简洁直接</option>
+  <option value="真诚分享">真诚分享</option>
+  <option value="干货教程">干货教程</option>
+  <option value="故事叙述">故事叙述</option>
+  <option value="情绪共鸣">情绪共鸣</option>
+  <option value="高端质感">高端质感</option>
+  <option value="促销转化">促销转化</option>
+</select>
+
+<label for="audience">目标受众</label>
+<input
+  id="audience"
+  type="text"
+  maxlength="100"
+  value="普通用户"
+  placeholder="例如：20—30 岁职场女性"
+>
+
+<label for="length">文案长度</label>
+<select id="length">
+  <option value="short">短：约 60—100 字</option>
+  <option value="medium" selected>中：约 180—300 字</option>
+  <option value="long">长：约 400—650 字</option>
+</select>
 
       <button id="generate-button" type="button">生成文案</button>
     </section>

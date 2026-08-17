@@ -3,12 +3,28 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+
 from app.prompts import build_copywriting_prompt
 
 
-def generate_ai_content(topic: str, platform: str, style: str) -> str:
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+
+MAX_TOKENS_BY_LENGTH = {
+    "short": 120,
+    "medium": 300,
+    "long": 650,
+}
+
+
+def generate_ai_content(
+    topic: str,
+    platform: str,
+    style: str,
+    audience: str,
+    length: str,
+) -> str:
     api_key = os.getenv("DEEPSEEK_API_KEY")
 
     if not api_key:
@@ -23,7 +39,19 @@ def generate_ai_content(topic: str, platform: str, style: str) -> str:
         topic=topic,
         platform=platform,
         style=style,
+        audience=audience,
+        length=length,
     )
+
+    max_tokens = MAX_TOKENS_BY_LENGTH.get(
+        length,
+        MAX_TOKENS_BY_LENGTH["medium"],
+    )
+
+    print(
+    f"Generating copy: length={length}, "
+    f"max_tokens={max_tokens}, audience={audience}"
+)
 
     response = client.chat.completions.create(
         model="deepseek-chat",
@@ -38,7 +66,7 @@ def generate_ai_content(topic: str, platform: str, style: str) -> str:
             },
         ],
         temperature=0.8,
-        max_tokens=350,
+        max_tokens=max_tokens,
     )
 
     content = response.choices[0].message.content
