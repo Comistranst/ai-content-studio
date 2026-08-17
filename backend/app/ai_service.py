@@ -38,6 +38,7 @@ def generate_ai_content(topic: str, platform: str, style: str) -> str:
             },
         ],
         temperature=0.8,
+        max_tokens=350,
     )
 
     content = response.choices[0].message.content
