@@ -62,13 +62,16 @@ def health_check():
 @app.post("/api/generate")
 def generate_content(request: GenerateRequest):
     try:
-        content = generate_ai_content(
+        generated = generate_ai_content(
             topic=request.topic,
             platform=request.platform,
             style=request.style,
             audience=request.audience,
             length=request.length,
         )
+
+        content = generated["content"]
+
     except Exception as error:
         print(f"AI generation error: {error}")
 
@@ -95,6 +98,9 @@ def generate_content(request: GenerateRequest):
             "style": request.style,
             "audience": request.audience,
             "length": request.length,
+            "title": generated["title"],
+            "body": generated["body"],
+            "hashtags": generated["hashtags"],
             "content": content,
         },
     }

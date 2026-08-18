@@ -67,10 +67,41 @@
       <button id="generate-button" type="button">生成文案</button>
     </section>
 
-    <section class="card result-card">
-      <h2>生成结果</h2>
-      <p id="result">请填写主题，然后点击“生成文案”。</p>
-    </section>
+<section class="card result-card">
+  <div class="result-header">
+    <h2>生成结果</h2>
+    <button id="copy-all-button" type="button" disabled>
+      复制全部
+    </button>
+  </div>
+
+  <div id="result-empty-state" class="result-empty-state">
+    请填写主题，然后点击“生成文案”。
+  </div>
+
+  <div id="result-content" class="result-content" hidden>
+    <div class="result-section">
+      <div class="result-section-header">
+        <h3>标题</h3>
+        <button id="copy-title-button" type="button">复制标题</button>
+      </div>
+      <p id="result-title" class="result-title"></p>
+    </div>
+
+    <div class="result-section">
+      <div class="result-section-header">
+        <h3>正文</h3>
+        <button id="copy-body-button" type="button">复制正文</button>
+      </div>
+      <p id="result-body" class="result-body"></p>
+    </div>
+
+    <div class="result-section">
+      <h3>标签</h3>
+      <div id="result-hashtags" class="result-hashtags"></div>
+    </div>
+  </div>
+</section>
     <section class="card history-card">
   <div class="history-header">
     <h2>历史记录</h2>

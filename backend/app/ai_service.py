@@ -18,13 +18,39 @@ MAX_TOKENS_BY_LENGTH = {
 }
 
 
+def parse_generated_content(content: str) -> dict:
+    title = ""
+    body = content.strip()
+    hashtags = []
+
+    if "标题：" in content and "正文：" in content and "标签：" in content:
+        after_title = content.split("标题：", 1)[1]
+        title_part, after_body = after_title.split("正文：", 1)
+        body_part, tags_part = after_body.split("标签：", 1)
+
+        title = title_part.strip()
+        body = body_part.strip()
+        hashtags = [
+            tag.strip()
+            for tag in tags_part.strip().split()
+            if tag.strip().startswith("#")
+        ]
+
+    return {
+        "title": title,
+        "body": body,
+        "hashtags": hashtags,
+        "content": content.strip(),
+    }
+
+
 def generate_ai_content(
     topic: str,
     platform: str,
     style: str,
     audience: str,
     length: str,
-) -> str:
+) -> dict:
     api_key = os.getenv("DEEPSEEK_API_KEY")
 
     if not api_key:
@@ -49,9 +75,9 @@ def generate_ai_content(
     )
 
     print(
-    f"Generating copy: length={length}, "
-    f"max_tokens={max_tokens}, audience={audience}"
-)
+        f"Generating copy: length={length}, "
+        f"max_tokens={max_tokens}, audience={audience}"
+    )
 
     response = client.chat.completions.create(
         model="deepseek-chat",
@@ -74,4 +100,4 @@ def generate_ai_content(
     if not content:
         raise RuntimeError("AI returned empty content.")
 
-    return content.strip()
+    return parse_generated_content(content)

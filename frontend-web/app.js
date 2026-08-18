@@ -9,7 +9,17 @@ const platformSelect = document.getElementById("platform");
 const styleSelect = document.getElementById("style");
 const audienceInput = document.getElementById("audience");
 const lengthSelect = document.getElementById("length");
-const resultElement = document.getElementById("result");
+const resultEmptyState = document.getElementById("result-empty-state");
+const resultContent = document.getElementById("result-content");
+const resultTitle = document.getElementById("result-title");
+const resultBody = document.getElementById("result-body");
+const resultHashtags = document.getElementById("result-hashtags");
+
+const copyAllButton = document.getElementById("copy-all-button");
+const copyTitleButton = document.getElementById("copy-title-button");
+const copyBodyButton = document.getElementById("copy-body-button");
+
+let currentGeneratedContent = null;
 
 const historyList = document.getElementById("history-list");
 const refreshHistoryButton = document.getElementById("refresh-history-button");
@@ -17,6 +27,62 @@ const loadMoreButton = document.getElementById("load-more-button");
 
 let historyOffset = 0;
 let hasMoreHistory = true;
+
+function setResultMessage(message) {
+  resultEmptyState.textContent = message;
+  resultEmptyState.hidden = false;
+  resultContent.hidden = true;
+  copyAllButton.disabled = true;
+  currentGeneratedContent = null;
+}
+
+
+function renderGeneratedContent(data) {
+  currentGeneratedContent = data;
+
+  resultTitle.textContent = data.title || "未生成标题";
+  resultBody.textContent = data.body || data.content || "";
+
+  resultHashtags.innerHTML = "";
+
+  const hashtags = data.hashtags || [];
+
+  hashtags.forEach((hashtag) => {
+    const tag = document.createElement("span");
+    tag.className = "hashtag";
+    tag.textContent = hashtag;
+    resultHashtags.appendChild(tag);
+  });
+
+  if (hashtags.length === 0) {
+    resultHashtags.textContent = "未生成标签";
+  }
+
+  resultEmptyState.hidden = true;
+  resultContent.hidden = false;
+  copyAllButton.disabled = false;
+}
+
+
+async function copyText(text, button, defaultLabel) {
+  try {
+    await navigator.clipboard.writeText(text);
+
+    button.textContent = "已复制";
+
+    setTimeout(() => {
+      button.textContent = defaultLabel;
+    }, 1500);
+  } catch (error) {
+    console.error(error);
+
+    button.textContent = "复制失败";
+
+    setTimeout(() => {
+      button.textContent = defaultLabel;
+    }, 1500);
+  }
+}
 
 function formatCreatedAt(createdAt) {
   const date = new Date(createdAt);
@@ -196,13 +262,13 @@ const audience = audienceInput.value.trim() || "普通用户";
 const length = lengthSelect.value;
 
   if (!topic) {
-    resultElement.textContent = "请输入一个主题，例如：瑜伽垫。";
+     setResultMessage("请输入一个主题，例如：瑜伽垫。"); 
     return;
   }
 
   generateButton.disabled = true;
   generateButton.textContent = "生成中...";
-  resultElement.textContent = "正在请求 AI 生成文案...";
+  setResultMessage("正在请求 AI 生成文案...");
 
   try {
     const response = await fetch(`${API_BASE_URL}/generate`, {
@@ -225,12 +291,12 @@ const length = lengthSelect.value;
       throw new Error(result.detail || "生成文案时发生未知错误。");
     }
 
-    resultElement.textContent = result.data.content;
+    renderGeneratedContent(result.data);
 
     await loadHistory({ reset: true });
   } catch (error) {
     console.error(error);
-    resultElement.textContent = error.message;
+    setResultMessage(error.message);
   } finally {
     generateButton.disabled = false;
     generateButton.textContent = "生成文案";
@@ -244,5 +310,47 @@ refreshHistoryButton.addEventListener("click", () => {
 loadMoreButton.addEventListener("click", () => {
   loadHistory();
 });
+copyTitleButton.addEventListener("click", () => {
+  if (!currentGeneratedContent) {
+    return;
+  }
 
+  copyText(
+    currentGeneratedContent.title || "",
+    copyTitleButton,
+    "复制标题"
+  );
+});
+
+
+copyBodyButton.addEventListener("click", () => {
+  if (!currentGeneratedContent) {
+    return;
+  }
+
+  copyText(
+    currentGeneratedContent.body || currentGeneratedContent.content || "",
+    copyBodyButton,
+    "复制正文"
+  );
+});
+
+
+copyAllButton.addEventListener("click", () => {
+  if (!currentGeneratedContent) {
+    return;
+  }
+
+  const hashtags = (currentGeneratedContent.hashtags || []).join(" ");
+
+  const text = [
+    currentGeneratedContent.title || "",
+    currentGeneratedContent.body || "",
+    hashtags,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  copyText(text, copyAllButton, "复制全部");
+});
 loadHistory({ reset: true });
