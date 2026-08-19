@@ -474,3 +474,14 @@ select:focus {
     transition-duration: 0.01ms !important;
   }
 }
+
+.history-hashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.history-hashtags:empty {
+  display: none;
+}

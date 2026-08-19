@@ -86,6 +86,9 @@ def generate_content(request: GenerateRequest):
         style=request.style,
         audience=request.audience,
         content_length=request.length,
+        title=generated["title"],
+        body=generated["body"],
+        hashtags=generated["hashtags"],
         content=content,
     )
 

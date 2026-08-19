@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -60,6 +61,21 @@ def init_database():
             "content_length",
             "content_length TEXT NOT NULL DEFAULT 'medium'",
         )
+        ensure_column(
+            connection,
+            "title",
+            "title TEXT",
+        )
+        ensure_column(
+            connection,
+            "body",
+            "body TEXT",
+        )
+        ensure_column(
+            connection,
+            "hashtags",
+            "hashtags TEXT",
+        )
 
 
 def save_generation(
@@ -68,9 +84,16 @@ def save_generation(
     style: str,
     audience: str,
     content_length: str,
+    title: str,
+    body: str,
+    hashtags: list[str],
     content: str,
 ) -> int:
     created_at = datetime.now().isoformat(timespec="seconds")
+    hashtags_json = json.dumps(
+        hashtags,
+        ensure_ascii=False,
+    )
 
     with get_connection() as connection:
         cursor = connection.execute(
@@ -81,10 +104,13 @@ def save_generation(
                 style,
                 audience,
                 content_length,
+                title,
+                body,
+                hashtags,
                 content,
                 created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 topic,
@@ -92,6 +118,9 @@ def save_generation(
                 style,
                 audience,
                 content_length,
+                title,
+                body,
+                hashtags_json,
                 content,
                 created_at,
             ),
@@ -99,7 +128,10 @@ def save_generation(
         return cursor.lastrowid
 
 
-def get_generation_history(limit: int = 10, offset: int = 0):
+def get_generation_history(
+    limit: int = 10,
+    offset: int = 0,
+) -> list[dict]:
     with get_connection() as connection:
         cursor = connection.execute(
             """
@@ -110,6 +142,9 @@ def get_generation_history(limit: int = 10, offset: int = 0):
                 style,
                 audience,
                 content_length,
+                title,
+                body,
+                hashtags,
                 content,
                 created_at
             FROM generation_history
@@ -119,8 +154,21 @@ def get_generation_history(limit: int = 10, offset: int = 0):
             (limit, offset),
         )
 
-        rows = cursor.fetchall()
-        return [dict(row) for row in rows]
+        records = []
+
+        for row in cursor.fetchall():
+            record = dict(row)
+
+            try:
+                record["hashtags"] = json.loads(
+                    record["hashtags"]
+                ) if record["hashtags"] else []
+            except json.JSONDecodeError:
+                record["hashtags"] = []
+
+            records.append(record)
+
+        return records
 
 
 def delete_generation(generation_id: int) -> bool:

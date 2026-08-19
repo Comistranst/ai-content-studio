@@ -98,41 +98,86 @@ function createHistoryItem(record) {
 
   const meta = document.createElement("p");
   meta.className = "history-meta";
+
+  const lengthLabels = {
+    short: "短文案",
+    medium: "中文案",
+    long: "长文案",
+  };
+
+  const audience = record.audience || "普通用户";
+  const length = lengthLabels[record.content_length] || "中文案";
+
   meta.textContent =
-    `${record.platform} · ${record.style} · ${formatCreatedAt(record.created_at)}`;
+    `${record.platform} · ${record.style} · ${length} · ${audience} · ${formatCreatedAt(record.created_at)}`;
 
-  const topic = document.createElement("h3");
-  topic.textContent = record.topic;
+  const title = document.createElement("h3");
+  title.textContent = record.title || record.topic;
 
-  const content = document.createElement("p");
-  content.className = "history-content";
-  content.textContent = record.content;
+  const body = document.createElement("p");
+  body.className = "history-content";
+  body.textContent = record.body || record.content;
+
+  const hashtags = Array.isArray(record.hashtags)
+    ? record.hashtags
+    : [];
+
+  const hashtagList = document.createElement("div");
+  hashtagList.className = "history-hashtags";
+
+  hashtags.forEach((hashtag) => {
+    const tag = document.createElement("span");
+    tag.className = "hashtag";
+    tag.textContent = hashtag;
+    hashtagList.appendChild(tag);
+  });
 
   const actions = document.createElement("div");
   actions.className = "history-actions";
 
-  const copyButton = document.createElement("button");
-  copyButton.className = "copy-button";
-  copyButton.type = "button";
-  copyButton.textContent = "复制文案";
+  const copyTitleButton = document.createElement("button");
+  copyTitleButton.className = "copy-button";
+  copyTitleButton.type = "button";
+  copyTitleButton.textContent = "复制标题";
 
-  copyButton.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(record.content);
+  copyTitleButton.addEventListener("click", () => {
+    copyText(
+      record.title || record.topic,
+      copyTitleButton,
+      "复制标题"
+    );
+  });
 
-      copyButton.textContent = "已复制";
+  const copyBodyButton = document.createElement("button");
+  copyBodyButton.className = "copy-button";
+  copyBodyButton.type = "button";
+  copyBodyButton.textContent = "复制正文";
 
-      setTimeout(() => {
-        copyButton.textContent = "复制文案";
-      }, 1500);
-    } catch (error) {
-      console.error(error);
-      copyButton.textContent = "复制失败";
+  copyBodyButton.addEventListener("click", () => {
+    copyText(
+      record.body || record.content,
+      copyBodyButton,
+      "复制正文"
+    );
+  });
 
-      setTimeout(() => {
-        copyButton.textContent = "复制文案";
-      }, 1500);
-    }
+  const copyAllButton = document.createElement("button");
+  copyAllButton.className = "copy-button";
+  copyAllButton.type = "button";
+  copyAllButton.textContent = "复制全部";
+
+  copyAllButton.addEventListener("click", () => {
+    const hashtagsText = hashtags.join(" ");
+
+    const text = [
+      record.title || record.topic,
+      record.body || record.content,
+      hashtagsText,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    copyText(text, copyAllButton, "复制全部");
   });
 
   const deleteButton = document.createElement("button");
@@ -142,7 +187,7 @@ function createHistoryItem(record) {
 
   deleteButton.addEventListener("click", async () => {
     const confirmed = window.confirm(
-      `确定删除“${record.topic}”这条历史记录吗？`
+      `确定删除“${record.title || record.topic}”这条历史记录吗？`
     );
 
     if (!confirmed) {
@@ -176,8 +221,20 @@ function createHistoryItem(record) {
     }
   });
 
-  actions.append(copyButton, deleteButton);
-  item.append(meta, topic, content, actions);
+  actions.append(
+    copyTitleButton,
+    copyBodyButton,
+    copyAllButton,
+    deleteButton
+  );
+
+  item.append(
+    meta,
+    title,
+    body,
+    hashtagList,
+    actions
+  );
 
   return item;
 }
