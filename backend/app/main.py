@@ -1,4 +1,5 @@
 from typing import Literal
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,11 +13,16 @@ from app.database import (
     save_generation,
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_database()
+    yield
 
 app = FastAPI(
     title="AI Content Studio API",
     version="0.1.0",
     description="AI Content Studio 后端服务",
+    lifespan=lifespan,
 )
 
 
@@ -100,9 +106,6 @@ class DeleteHistoryResponse(BaseModel):
     message: str
     data: DeleteHistoryDataResponse
 
-@app.on_event("startup")
-def startup():
-    init_database()
 
 
 @app.get("/api/health", response_model=HealthResponse)

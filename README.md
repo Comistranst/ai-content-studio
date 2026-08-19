@@ -110,13 +110,22 @@ Current test status:
 
 ---
 
+
+
 ## Screenshots
 
-Screenshots will be added in a future update.
+### Content generation form
 
-Recommended screenshots:
+![Content generation form](screenshots/generate-form.png)
 
-- Content generation form
-- Generated copywriting result
-- Generation history list
-- FastAPI interactive API documentation at `/docs`
+### Generated result
+
+![Generated copywriting result](screenshots/generated-result.png)
+
+### API documentation
+
+![FastAPI interactive API documentation](screenshots/api-docs.png)
+
+### Generation history
+
+![Generation history](screenshots/history.png)
