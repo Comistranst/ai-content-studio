@@ -344,16 +344,36 @@ const length = lengthSelect.value;
 
     const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error(result.detail || "生成文案时发生未知错误。");
+      if (!response.ok) {
+       if (response.status === 502) {
+        throw new Error(
+          "AI 服务暂时不可用，请稍后重试。"
+        );
+      }
+
+      if (response.status === 500) {
+        throw new Error(
+          "文案已生成，但历史记录保存失败，请稍后重试。"
+        );
+      }
+
+      throw new Error(
+        result.detail || "生成文案时发生未知错误。"
+      );
     }
 
     renderGeneratedContent(result.data);
 
     await loadHistory({ reset: true });
-  } catch (error) {
+    } catch (error) {
     console.error(error);
-    setResultMessage(error.message);
+
+    const message =
+      error instanceof TypeError
+        ? "无法连接后端服务，请确认后端已启动。"
+        : error.message;
+
+    setResultMessage(message);
   } finally {
     generateButton.disabled = false;
     generateButton.textContent = "生成文案";
