@@ -53,3 +53,70 @@ Version Control
 ## Status
 
 🚧 Under Development
+
+---
+
+## Local Development
+
+### 1. Start the backend
+
+Open a terminal and enter the backend directory:
+
+```powershell
+cd backend
+```
+
+Activate the virtual environment:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Start the FastAPI development server:
+
+```powershell
+uvicorn app.main:app --reload
+```
+
+After the server starts, open:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### 2. Open the frontend
+
+Open the frontend project with VS Code, then use the Live Server extension to open `index.html`.
+
+The frontend should run on one of the local addresses already allowed by the backend CORS configuration, such as:
+
+```text
+http://127.0.0.1:5500
+```
+
+### 3. Run tests
+
+In the `backend` directory with the virtual environment activated, run:
+
+```powershell
+pytest -q
+```
+
+Current test status:
+
+```text
+8 passed
+```
+
+---
+
+## Screenshots
+
+Screenshots will be added in a future update.
+
+Recommended screenshots:
+
+- Content generation form
+- Generated copywriting result
+- Generation history list
+- FastAPI interactive API documentation at `/docs`

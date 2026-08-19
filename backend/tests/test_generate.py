@@ -62,3 +62,42 @@ def test_generate_rejects_empty_topic():
     )
 
     assert response.status_code == 422
+
+def test_generate_returns_500_when_database_save_fails(monkeypatch):
+    def fake_generate_ai_content(topic, platform, style, audience, length):
+        return {
+            "title": "测试标题",
+            "body": "测试正文",
+            "hashtags": ["#测试"],
+            "content": "测试标题\n\n测试正文\n\n#测试",
+        }
+
+    def fake_save_generation(**kwargs):
+        raise Exception("database is unavailable")
+
+    monkeypatch.setattr(
+        main,
+        "generate_ai_content",
+        fake_generate_ai_content,
+    )
+    monkeypatch.setattr(
+        main,
+        "save_generation",
+        fake_save_generation,
+    )
+
+    response = client.post(
+        "/api/generate",
+        json={
+            "topic": "数据库故障测试",
+            "platform": "小红书",
+            "style": "真实种草",
+            "audience": "普通用户",
+            "length": "medium",
+        },
+    )
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == (
+        "生成内容已完成，但保存历史记录失败，请稍后重试。"
+    )

@@ -45,13 +45,67 @@ class GenerateRequest(BaseModel):
     )
     length: Literal["short", "medium", "long"] = "medium"
 
+class HealthResponse(BaseModel):
+    status: str
+    message: str
+
+class GenerateDataResponse(BaseModel):
+    id: int
+    topic: str
+    platform: str
+    style: str
+    audience: str
+    length: str
+    title: str
+    body: str
+    hashtags: str | list[str]
+    content: str
+
+
+class GenerateResponse(BaseModel):
+    success: bool
+    data: GenerateDataResponse
+
+class HistoryItemResponse(BaseModel):
+    id: int
+    topic: str
+    platform: str
+    style: str
+    audience: str
+    content_length: str
+    title: str
+    body: str
+    hashtags: list[str]
+    content: str
+    created_at: str
+
+
+class PaginationResponse(BaseModel):
+    limit: int
+    offset: int
+    count: int
+
+
+class HistoryResponse(BaseModel):
+    success: bool
+    data: list[HistoryItemResponse]
+    pagination: PaginationResponse
+
+class DeleteHistoryDataResponse(BaseModel):
+    id: int
+
+
+class DeleteHistoryResponse(BaseModel):
+    success: bool
+    message: str
+    data: DeleteHistoryDataResponse
 
 @app.on_event("startup")
 def startup():
     init_database()
 
 
-@app.get("/api/health")
+@app.get("/api/health", response_model=HealthResponse)
 def health_check():
     return {
         "status": "ok",
@@ -59,7 +113,7 @@ def health_check():
     }
 
 
-@app.post("/api/generate")
+@app.post("/api/generate", response_model=GenerateResponse)
 def generate_content(request: GenerateRequest):
     try:
         generated = generate_ai_content(
@@ -80,17 +134,25 @@ def generate_content(request: GenerateRequest):
             detail="AI 文案生成失败，请稍后重试。",
         )
 
-    generation_id = save_generation(
-        topic=request.topic,
-        platform=request.platform,
-        style=request.style,
-        audience=request.audience,
-        content_length=request.length,
-        title=generated["title"],
-        body=generated["body"],
-        hashtags=generated["hashtags"],
-        content=content,
-    )
+    try:
+        generation_id = save_generation(
+            topic=request.topic,
+            platform=request.platform,
+            style=request.style,
+            audience=request.audience,
+            content_length=request.length,
+            title=generated["title"],
+            body=generated["body"],
+            hashtags=generated["hashtags"],
+            content=content,
+        )
+    except Exception as error:
+        print(f"Database save error: {error}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="生成内容已完成，但保存历史记录失败，请稍后重试。",
+        )
 
     return {
         "success": True,
@@ -109,7 +171,7 @@ def generate_content(request: GenerateRequest):
     }
 
 
-@app.get("/api/history")
+@app.get("/api/history", response_model=HistoryResponse)
 def get_history(
     limit: int = Query(default=10, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
@@ -130,7 +192,10 @@ def get_history(
     }
 
 
-@app.delete("/api/history/{generation_id}")
+@app.delete(
+    "/api/history/{generation_id}",
+    response_model=DeleteHistoryResponse,
+)
 def delete_history(generation_id: int):
     deleted = delete_generation(generation_id)
 
