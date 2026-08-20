@@ -19,28 +19,59 @@ MAX_TOKENS_BY_LENGTH = {
 
 
 def parse_generated_content(content: str) -> dict:
+    content = content.strip()
+
     title = ""
-    body = content.strip()
+    body = content
     hashtags = []
 
-    if "标题：" in content and "正文：" in content and "标签：" in content:
-        after_title = content.split("标题：", 1)[1]
-        title_part, after_body = after_title.split("正文：", 1)
-        body_part, tags_part = after_body.split("标签：", 1)
+    lines = [line.strip() for line in content.splitlines()]
+    title_index = None
+    body_index = None
+    tags_index = None
 
-        title = title_part.strip()
-        body = body_part.strip()
+    for index, line in enumerate(lines):
+        if line.startswith("标题：") or line.startswith("标题:"):
+            title_index = index
+        elif line.startswith("正文：") or line.startswith("正文:"):
+            body_index = index
+        elif line.startswith("标签：") or line.startswith("标签:"):
+            tags_index = index
+
+    if title_index is not None:
+        title = lines[title_index].split("：", 1)[-1].split(":", 1)[-1].strip()
+
+    if body_index is not None:
+        body_end = tags_index if tags_index is not None else len(lines)
+
+        body_lines = [
+            line
+            for line in lines[body_index + 1 : body_end]
+            if line and not line.startswith("#")
+        ]
+        body = "\n".join(body_lines).strip()
+
+    hashtags = [
+        tag
+        for line in lines
+        if line.startswith("#")
+        for tag in line.split()
+        if tag.startswith("#")
+    ]
+
+    if tags_index is not None:
+        tag_text = "\n".join(lines[tags_index:])
         hashtags = [
-            tag.strip()
-            for tag in tags_part.strip().split()
-            if tag.strip().startswith("#")
+            tag
+            for tag in tag_text.replace("标签：", "").replace("标签:", "").split()
+            if tag.startswith("#")
         ]
 
     return {
         "title": title,
         "body": body,
         "hashtags": hashtags,
-        "content": content.strip(),
+        "content": content,
     }
 
 
