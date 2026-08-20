@@ -300,23 +300,31 @@ async function loadHistory({ reset = false } = {}) {
     hasMoreHistory = records.length === HISTORY_PAGE_SIZE;
 
     updateLoadMoreButton();
-  } catch (error) {
+    } catch (error) {
     console.error(error);
 
     if (reset) {
       historyList.innerHTML = `
         <p class="history-message">${error.message}</p>
       `;
+    } else {
+      loadMoreButton.textContent = "加载失败，请重试";
+
+      setTimeout(() => {
+        loadMoreButton.textContent = "加载更多";
+      }, 1500);
     }
   } finally {
     refreshHistoryButton.disabled = false;
     refreshHistoryButton.textContent = "刷新历史";
 
     loadMoreButton.disabled = false;
-    loadMoreButton.textContent = "加载更多";
+
+    if (reset) {
+      loadMoreButton.textContent = "加载更多";
+    }
   }
 }
-
 generateButton.addEventListener("click", async () => {
 const topic = topicInput.value.trim();
 const platform = platformSelect.value;
