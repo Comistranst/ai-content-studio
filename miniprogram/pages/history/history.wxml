@@ -30,13 +30,24 @@
 
       <text class="content">{{item.content}}</text>
 
-      <button
-        class="copy-button"
-        data-content="{{item.content}}"
-        bindtap="onCopyTap"
-      >
-        复制文案
-      </button>
+      <view class="action-row">
+        <button
+          class="copy-button"
+          data-content="{{item.content}}"
+          bindtap="onCopyTap"
+        >
+          复制文案
+        </button>
+
+        <button
+          class="delete-button"
+          data-id="{{item.id}}"
+          data-topic="{{item.topic}}"
+          bindtap="onDeleteTap"
+        >
+          删除
+        </button>
+      </view>
     </view>
   </view>
 </view>

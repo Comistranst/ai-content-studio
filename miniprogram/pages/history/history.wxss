@@ -95,11 +95,28 @@
   white-space: pre-wrap;
 }
 
-.copy-button {
+.action-row {
+  display: flex;
+  gap: 20rpx;
   margin-top: 24rpx;
+}
+
+.copy-button,
+.delete-button {
+  flex: 1;
+  margin: 0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.copy-button {
   background-color: #ffffff;
   color: #111111;
   border: 1px solid #111111;
-  border-radius: 12rpx;
-  font-size: 28rpx;
+}
+
+.delete-button {
+  background-color: #ffffff;
+  color: #d93025;
+  border: 1px solid #d93025;
 }
