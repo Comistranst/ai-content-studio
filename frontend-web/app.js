@@ -212,6 +212,12 @@ function createHistoryItem(record) {
       }
 
       item.remove();
+
+refreshHistoryButton.textContent = "已删除";
+
+setTimeout(() => {
+  refreshHistoryButton.textContent = "刷新历史";
+}, 1500);
     } catch (error) {
       console.error(error);
       alert(error.message);
