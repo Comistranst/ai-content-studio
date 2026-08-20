@@ -1,0 +1,105 @@
+.page {
+  min-height: 100vh;
+  padding: 40rpx 32rpx;
+  box-sizing: border-box;
+  background-color: #f7f7f7;
+}
+
+.header {
+  margin-bottom: 40rpx;
+}
+
+.title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #111111;
+  margin-bottom: 16rpx;
+}
+
+.subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.status {
+  padding: 80rpx 32rpx;
+  text-align: center;
+  color: #777777;
+  font-size: 30rpx;
+}
+
+.empty-title {
+  display: block;
+  color: #222222;
+  font-size: 34rpx;
+  font-weight: bold;
+  margin-bottom: 16rpx;
+}
+
+.empty-text {
+  display: block;
+  font-size: 28rpx;
+  color: #777777;
+}
+
+.history-card {
+  margin-bottom: 28rpx;
+  padding: 28rpx;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  box-sizing: border-box;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.platform {
+  color: #111111;
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.time {
+  color: #999999;
+  font-size: 24rpx;
+}
+
+.topic {
+  display: block;
+  color: #666666;
+  font-size: 26rpx;
+  margin-bottom: 16rpx;
+}
+
+.card-title {
+  display: block;
+  color: #111111;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 16rpx;
+}
+
+.content {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #444444;
+  font-size: 28rpx;
+  line-height: 1.7;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  white-space: pre-wrap;
+}
+
+.copy-button {
+  margin-top: 24rpx;
+  background-color: #ffffff;
+  color: #111111;
+  border: 1px solid #111111;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
