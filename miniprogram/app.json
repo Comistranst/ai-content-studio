@@ -1,0 +1,11 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/logs/logs"
+  ],
+  "window": {
+    "navigationBarTitleText": "AI Content Studio",
+    "navigationBarBackgroundColor": "#111111",
+    "navigationBarTextStyle": "white"
+  }
+}

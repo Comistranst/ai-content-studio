@@ -1,0 +1,32 @@
+<view class="page">
+  <text class="title">AI Content Studio</text>
+  <text class="subtitle">中文社交媒体内容创作工具</text>
+
+  <text class="label">你想写什么内容？</text>
+
+  <input
+    class="input"
+    placeholder="例如：一家云南咖啡店"
+    value="{{topic}}"
+    bindinput="onTopicInput"
+  />
+
+  <button
+    class="button"
+    bindtap="onGenerateTap"
+    loading="{{loading}}"
+    disabled="{{loading}}"
+  >
+    {{loading ? "正在生成…" : "生成文案"}}
+  </button>
+
+  <view wx:if="{{result}}" class="result-card">
+    <text class="result-title">生成结果</text>
+
+    <text class="result-content">{{result}}</text>
+
+    <button class="copy-button" bindtap="onCopyTap">
+      复制文案
+    </button>
+  </view>
+</view>
