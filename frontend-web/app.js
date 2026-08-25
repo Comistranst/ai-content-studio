@@ -1,6 +1,6 @@
 console.log("app.js 已成功加载");
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+const API_BASE_URL = "https://ai-content-studio-vp7l.onrender.com/api";
 const HISTORY_PAGE_SIZE = 10;
 
 const generateButton = document.getElementById("generate-button");

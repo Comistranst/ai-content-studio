@@ -1,5 +1,5 @@
-const BASE_URL = "http://192.168.0.107:8000"
+const BASE_URL = "https://ai-content-studio-vp7l.onrender.com"
 
 module.exports = {
   BASE_URL
-}
+};
