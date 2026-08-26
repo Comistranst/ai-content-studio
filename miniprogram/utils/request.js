@@ -1,4 +1,4 @@
-const { BASE_URL } = require("./config")
+const { BASE_URL } = require("./config");
 
 function request({ url, method = "GET", data = {} }) {
   return new Promise((resolve, reject) => {
@@ -11,22 +11,24 @@ function request({ url, method = "GET", data = {} }) {
       },
       success(res) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res.data)
+          resolve(res.data);
         } else {
           reject({
             message: `请求失败：${res.statusCode}`
-          })
+          });
         }
       },
-      fail() {
+      fail(error) {
+        console.error("网络请求失败：", error);
+
         reject({
-          message: "无法连接后端"
-        })
+          message: error.errMsg || "无法连接后端"
+        });
       }
-    })
-  })
+    });
+  });
 }
 
 module.exports = {
   request
-}
+};
