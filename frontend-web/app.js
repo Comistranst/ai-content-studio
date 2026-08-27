@@ -15,6 +15,19 @@ const resultTitle = document.getElementById("result-title");
 const resultBody = document.getElementById("result-body");
 const resultHashtags = document.getElementById("result-hashtags");
 
+const optimizeContentInput = document.getElementById("optimize-content");
+const optimizeGoalSelect = document.getElementById("optimize-goal");
+const optimizeButton = document.getElementById("optimize-button");
+const optimizeEmptyState = document.getElementById("optimize-empty-state");
+const optimizeResultContent = document.getElementById("optimize-result-content");
+const optimizedContent = document.getElementById("optimized-content");
+const copyOptimizedButton = document.getElementById("copy-optimized-button");
+const useGeneratedContentButton = document.getElementById(
+  "use-generated-content-button"
+);
+
+let currentOptimizedContent = "";
+
 const copyAllButton = document.getElementById("copy-all-button");
 const copyTitleButton = document.getElementById("copy-title-button");
 const copyBodyButton = document.getElementById("copy-body-button");
@@ -83,7 +96,22 @@ async function copyText(text, button, defaultLabel) {
     }, 1500);
   }
 }
+function setOptimizeMessage(message) {
+  optimizeEmptyState.textContent = message;
+  optimizeEmptyState.hidden = false;
+  optimizeResultContent.hidden = true;
+  copyOptimizedButton.disabled = true;
+  currentOptimizedContent = "";
+}
 
+function renderOptimizedContent(content) {
+  currentOptimizedContent = content;
+  optimizedContent.textContent = content;
+
+  optimizeEmptyState.hidden = true;
+  optimizeResultContent.hidden = false;
+  copyOptimizedButton.disabled = false;
+}
 function formatCreatedAt(createdAt) {
   const date = new Date(createdAt);
 
@@ -445,3 +473,86 @@ copyAllButton.addEventListener("click", () => {
   copyText(text, copyAllButton, "复制全部");
 });
 loadHistory({ reset: true });
+
+useGeneratedContentButton.addEventListener("click", () => {
+  if (!currentGeneratedContent) {
+    setOptimizeMessage("请先生成一篇文案，再使用当前生成结果。");
+    return;
+  }
+
+  const hashtags = (currentGeneratedContent.hashtags || []).join(" ");
+
+  const content = [
+    currentGeneratedContent.title || "",
+    currentGeneratedContent.body || currentGeneratedContent.content || "",
+    hashtags,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  optimizeContentInput.value = content;
+  setOptimizeMessage("已填入当前生成结果，请选择目标后点击“优化文案”。");
+  optimizeContentInput.focus();
+});
+
+
+optimizeButton.addEventListener("click", async () => {
+  const content = optimizeContentInput.value.trim();
+  const goal = optimizeGoalSelect.value;
+
+  if (!content) {
+    setOptimizeMessage("请先粘贴或输入需要优化的文案。");
+    optimizeContentInput.focus();
+    return;
+  }
+
+  optimizeButton.disabled = true;
+  optimizeButton.textContent = "优化中...";
+  setOptimizeMessage("正在请求 AI 优化文案...");
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/optimize`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        content,
+        goal,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.detail || "优化文案时发生未知错误。");
+    }
+
+    renderOptimizedContent(result.data.optimized_content);
+  } catch (error) {
+    console.error(error);
+
+    const message =
+      error instanceof TypeError
+        ? "无法连接后端服务，请稍后重试。"
+        : error.message;
+
+    setOptimizeMessage(message);
+  } finally {
+    optimizeButton.disabled = false;
+    optimizeButton.textContent = "优化文案";
+  }
+});
+
+
+copyOptimizedButton.addEventListener("click", () => {
+  if (!currentOptimizedContent) {
+    return;
+  }
+
+  copyText(
+    currentOptimizedContent,
+    copyOptimizedButton,
+    "复制优化结果"
+  );
+});

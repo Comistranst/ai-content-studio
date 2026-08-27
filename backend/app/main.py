@@ -5,7 +5,10 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from app.ai_service import generate_ai_content
+from app.ai_service import (
+    generate_ai_content,
+    optimize_ai_content,
+)
 from app.database import (
     delete_generation,
     get_generation_history,
@@ -34,7 +37,6 @@ app.add_middleware(
         "http://127.0.0.1:5501",
         "http://localhost:5501",
         "https://ai-content-studio-ecru.vercel.app",
-
     ],
     allow_credentials=False,
     allow_methods=["*"],
@@ -52,6 +54,26 @@ class GenerateRequest(BaseModel):
         max_length=100,
     )
     length: Literal["short", "medium", "long"] = "medium"
+
+class OptimizeRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=5000)
+    goal: Literal[
+        "更简洁",
+        "更有吸引力",
+        "更专业",
+        "更适合小红书",
+    ]
+
+
+class OptimizeDataResponse(BaseModel):
+    original_content: str
+    optimized_content: str
+    goal: str
+
+
+class OptimizeResponse(BaseModel):
+    success: bool
+    data: OptimizeDataResponse
 
 class HealthResponse(BaseModel):
     status: str
@@ -175,6 +197,25 @@ def generate_content(request: GenerateRequest):
         },
     }
 
+@app.post("/api/optimize", response_model=OptimizeResponse)
+def optimize_content(request: OptimizeRequest):
+    try:
+        result = optimize_ai_content(
+            content=request.content,
+            goal=request.goal,
+        )
+    except Exception as error:
+        print(f"AI optimization error: {error}")
+
+        raise HTTPException(
+            status_code=502,
+            detail="AI 文案优化失败，请稍后重试。",
+        )
+
+    return {
+        "success": True,
+        "data": result,
+    }
 
 @app.get("/api/history", response_model=HistoryResponse)
 def get_history(

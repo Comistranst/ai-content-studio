@@ -4,7 +4,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from app.prompts import build_copywriting_prompt
+from app.prompts import (
+    build_copywriting_prompt,
+    build_optimize_prompt,
+)
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -132,3 +135,48 @@ def generate_ai_content(
         raise RuntimeError("AI returned empty content.")
 
     return parse_generated_content(content)
+
+def optimize_ai_content(content: str, goal: str) -> dict:
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+
+    if not api_key:
+        raise RuntimeError("DEEPSEEK_API_KEY is not configured.")
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.deepseek.com",
+    )
+
+    prompt = build_optimize_prompt(
+        content=content,
+        goal=goal,
+    )
+
+    print(f"Optimizing copy: goal={goal}")
+
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[
+            {
+                "role": "system",
+                "content": "你是可靠、专业的中文新媒体文案编辑。",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+        temperature=0.6,
+        max_tokens=800,
+    )
+
+    optimized_content = response.choices[0].message.content
+
+    if not optimized_content:
+        raise RuntimeError("AI returned empty optimized content.")
+
+    return {
+        "original_content": content,
+        "optimized_content": optimized_content.strip(),
+        "goal": goal,
+    }

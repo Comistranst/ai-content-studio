@@ -102,7 +102,56 @@
     </div>
   </div>
 </section>
-    <section class="card history-card">
+
+<section class="card optimizer-card">
+  <div class="optimizer-header">
+    <div>
+      <h2>文案优化器</h2>
+      <p class="optimizer-description">
+        粘贴已有文案，选择优化目标，让 AI 帮你改得更好。
+      </p>
+    </div>
+    <button id="use-generated-content-button" type="button">
+      使用当前生成结果
+    </button>
+  </div>
+
+  <label for="optimize-content">待优化文案</label>
+  <textarea
+    id="optimize-content"
+    rows="8"
+    maxlength="5000"
+    placeholder="粘贴一段你想优化的文案"
+  ></textarea>
+
+  <label for="optimize-goal">优化目标</label>
+  <select id="optimize-goal">
+    <option value="更简洁" selected>更简洁</option>
+    <option value="更有吸引力">更有吸引力</option>
+    <option value="更专业">更专业</option>
+    <option value="更适合小红书">更适合小红书</option>
+  </select>
+
+  <button id="optimize-button" type="button">优化文案</button>
+
+  <div id="optimize-empty-state" class="result-empty-state">
+    粘贴文案后，选择优化目标并点击“优化文案”。
+  </div>
+
+  <div id="optimize-result-content" class="result-content" hidden>
+    <div class="result-section">
+      <div class="result-section-header">
+        <h3>优化结果</h3>
+        <button id="copy-optimized-button" type="button" disabled>
+          复制优化结果
+        </button>
+      </div>
+      <p id="optimized-content" class="result-body"></p>
+    </div>
+  </div>
+</section>
+
+<section class="card history-card">
   <div class="history-header">
     <h2>历史记录</h2>
     <button id="refresh-history-button" type="button">
