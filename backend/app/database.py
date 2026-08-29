@@ -77,6 +77,22 @@ def init_database():
             "hashtags TEXT",
         )
 
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS projects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                topic TEXT NOT NULL,
+                platform TEXT NOT NULL,
+                style TEXT NOT NULL,
+                audience TEXT NOT NULL,
+                content_length TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'drafting',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
 
 def save_generation(
     topic: str,
@@ -160,9 +176,11 @@ def get_generation_history(
             record = dict(row)
 
             try:
-                record["hashtags"] = json.loads(
-                    record["hashtags"]
-                ) if record["hashtags"] else []
+                record["hashtags"] = (
+                    json.loads(record["hashtags"])
+                    if record["hashtags"]
+                    else []
+                )
             except json.JSONDecodeError:
                 record["hashtags"] = []
 
@@ -182,3 +200,61 @@ def delete_generation(generation_id: int) -> bool:
         )
 
         return cursor.rowcount > 0
+
+
+def create_project(
+    topic: str,
+    platform: str,
+    style: str,
+    audience: str,
+    content_length: str,
+) -> dict:
+    now = datetime.now().isoformat(timespec="seconds")
+
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO projects (
+                topic,
+                platform,
+                style,
+                audience,
+                content_length,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, 'drafting', ?, ?)
+            """,
+            (
+                topic,
+                platform,
+                style,
+                audience,
+                content_length,
+                now,
+                now,
+            ),
+        )
+
+        project_id = cursor.lastrowid
+
+        project = connection.execute(
+            """
+            SELECT
+                id,
+                topic,
+                platform,
+                style,
+                audience,
+                content_length,
+                status,
+                created_at,
+                updated_at
+            FROM projects
+            WHERE id = ?
+            """,
+            (project_id,),
+        ).fetchone()
+
+        return dict(project)

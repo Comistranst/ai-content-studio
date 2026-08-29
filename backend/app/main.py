@@ -10,6 +10,7 @@ from app.ai_service import (
     optimize_ai_content,
 )
 from app.database import (
+    create_project,
     delete_generation,
     get_generation_history,
     init_database,
@@ -64,6 +65,33 @@ class OptimizeRequest(BaseModel):
         "更适合小红书",
     ]
 
+class ProjectCreateRequest(BaseModel):
+    topic: str = Field(min_length=1, max_length=100)
+    platform: str = Field(min_length=1, max_length=50)
+    style: str = Field(min_length=1, max_length=50)
+    audience: str = Field(
+        default="普通用户",
+        min_length=1,
+        max_length=100,
+    )
+    length: Literal["short", "medium", "long"] = "medium"
+
+
+class ProjectDataResponse(BaseModel):
+    id: int
+    topic: str
+    platform: str
+    style: str
+    audience: str
+    length: str
+    status: Literal["drafting", "final"]
+    created_at: str
+    updated_at: str
+
+
+class ProjectCreateResponse(BaseModel):
+    success: bool
+    data: ProjectDataResponse
 
 class OptimizeDataResponse(BaseModel):
     original_content: str
@@ -139,6 +167,38 @@ def health_check():
         "message": "AI Content Studio backend is running",
     }
 
+@app.post("/api/projects", response_model=ProjectCreateResponse)
+def create_content_project(request: ProjectCreateRequest):
+    try:
+        project = create_project(
+            topic=request.topic,
+            platform=request.platform,
+            style=request.style,
+            audience=request.audience,
+            content_length=request.length,
+        )
+    except Exception as error:
+        print(f"Project create error: {error}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="创建内容项目失败，请稍后重试。",
+        )
+
+    return {
+        "success": True,
+        "data": {
+            "id": project["id"],
+            "topic": project["topic"],
+            "platform": project["platform"],
+            "style": project["style"],
+            "audience": project["audience"],
+            "length": project["content_length"],
+            "status": project["status"],
+            "created_at": project["created_at"],
+            "updated_at": project["updated_at"],
+        },
+    }
 
 @app.post("/api/generate", response_model=GenerateResponse)
 def generate_content(request: GenerateRequest):
