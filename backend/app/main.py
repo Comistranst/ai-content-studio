@@ -13,6 +13,7 @@ from app.database import (
     create_project,
     delete_generation,
     get_generation_history,
+    get_projects,
     init_database,
     save_generation,
 )
@@ -92,7 +93,16 @@ class ProjectDataResponse(BaseModel):
 class ProjectCreateResponse(BaseModel):
     success: bool
     data: ProjectDataResponse
+class ProjectPaginationResponse(BaseModel):
+    limit: int
+    offset: int
+    count: int
 
+
+class ProjectListResponse(BaseModel):
+    success: bool
+    data: list[ProjectDataResponse]
+    pagination: ProjectPaginationResponse
 class OptimizeDataResponse(BaseModel):
     original_content: str
     optimized_content: str
@@ -200,6 +210,46 @@ def create_content_project(request: ProjectCreateRequest):
         },
     }
 
+@app.get("/api/projects", response_model=ProjectListResponse)
+def list_content_projects(
+    limit: int = Query(default=20, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
+):
+    try:
+        projects = get_projects(
+            limit=limit,
+            offset=offset,
+        )
+    except Exception as error:
+        print(f"Project list error: {error}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="获取内容项目列表失败，请稍后重试。",
+        )
+
+    return {
+        "success": True,
+        "data": [
+            {
+                "id": project["id"],
+                "topic": project["topic"],
+                "platform": project["platform"],
+                "style": project["style"],
+                "audience": project["audience"],
+                "length": project["content_length"],
+                "status": project["status"],
+                "created_at": project["created_at"],
+                "updated_at": project["updated_at"],
+            }
+            for project in projects
+        ],
+        "pagination": {
+            "limit": limit,
+            "offset": offset,
+            "count": len(projects),
+        },
+    }
 @app.post("/api/generate", response_model=GenerateResponse)
 def generate_content(request: GenerateRequest):
     try:

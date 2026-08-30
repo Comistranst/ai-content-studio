@@ -258,3 +258,33 @@ def create_project(
         ).fetchone()
 
         return dict(project)
+
+
+def get_projects(
+    limit: int = 20,
+    offset: int = 0,
+) -> list[dict]:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            SELECT
+                id,
+                topic,
+                platform,
+                style,
+                audience,
+                content_length,
+                status,
+                created_at,
+                updated_at
+            FROM projects
+            ORDER BY updated_at DESC, id DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        )
+
+        return [
+            dict(row)
+            for row in cursor.fetchall()
+        ]
