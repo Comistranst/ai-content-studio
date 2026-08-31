@@ -13,6 +13,7 @@ from app.database import (
     create_project,
     delete_generation,
     get_generation_history,
+    get_project_by_id,
     get_projects,
     init_database,
     save_generation,
@@ -248,6 +249,43 @@ def list_content_projects(
             "limit": limit,
             "offset": offset,
             "count": len(projects),
+        },
+    }
+
+
+@app.get(
+    "/api/projects/{project_id}",
+    response_model=ProjectCreateResponse,
+)
+def get_content_project(project_id: int):
+    try:
+        project = get_project_by_id(project_id)
+    except Exception as error:
+        print(f"Project detail error: {error}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="获取内容项目详情失败，请稍后重试。",
+        )
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="内容项目不存在。",
+        )
+
+    return {
+        "success": True,
+        "data": {
+            "id": project["id"],
+            "topic": project["topic"],
+            "platform": project["platform"],
+            "style": project["style"],
+            "audience": project["audience"],
+            "length": project["content_length"],
+            "status": project["status"],
+            "created_at": project["created_at"],
+            "updated_at": project["updated_at"],
         },
     }
 @app.post("/api/generate", response_model=GenerateResponse)

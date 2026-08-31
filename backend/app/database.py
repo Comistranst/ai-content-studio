@@ -288,3 +288,25 @@ def get_projects(
             dict(row)
             for row in cursor.fetchall()
         ]
+
+def get_project_by_id(project_id: int) -> dict | None:
+    with get_connection() as connection:
+        project = connection.execute(
+            """
+            SELECT
+                id,
+                topic,
+                platform,
+                style,
+                audience,
+                content_length,
+                status,
+                created_at,
+                updated_at
+            FROM projects
+            WHERE id = ?
+            """,
+            (project_id,),
+        ).fetchone()
+
+        return dict(project) if project else None
