@@ -11,6 +11,7 @@ DATABASE_PATH = BASE_DIR / "data" / "ai_content_studio.db"
 def get_connection():
     connection = sqlite3.connect(DATABASE_PATH)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
 
@@ -90,6 +91,33 @@ def init_database():
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
+            """
+        )
+
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS content_versions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL,
+                source_type TEXT NOT NULL,
+                optimization_goal TEXT,
+                title TEXT NOT NULL,
+                body TEXT NOT NULL,
+                hashtags TEXT NOT NULL DEFAULT '[]',
+                content TEXT NOT NULL,
+                is_final INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (project_id)
+                    REFERENCES projects(id)
+                    ON DELETE CASCADE
+            )
+            """
+        )
+
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_content_versions_project_id
+            ON content_versions(project_id)
             """
         )
 
@@ -289,6 +317,7 @@ def get_projects(
             for row in cursor.fetchall()
         ]
 
+
 def get_project_by_id(project_id: int) -> dict | None:
     with get_connection() as connection:
         project = connection.execute(
@@ -310,3 +339,82 @@ def get_project_by_id(project_id: int) -> dict | None:
         ).fetchone()
 
         return dict(project) if project else None
+
+def create_content_version(
+    project_id: int,
+    source_type: str,
+    optimization_goal: str | None,
+    title: str,
+    body: str,
+    hashtags: list[str],
+    content: str,
+) -> dict:
+    created_at = datetime.now().isoformat(timespec="seconds")
+    hashtags_json = json.dumps(
+        hashtags,
+        ensure_ascii=False,
+    )
+
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO content_versions (
+                project_id,
+                source_type,
+                optimization_goal,
+                title,
+                body,
+                hashtags,
+                content,
+                is_final,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
+            """,
+            (
+                project_id,
+                source_type,
+                optimization_goal,
+                title,
+                body,
+                hashtags_json,
+                content,
+                created_at,
+            ),
+        )
+
+        version_id = cursor.lastrowid
+
+        connection.execute(
+            """
+            UPDATE projects
+            SET updated_at = ?
+            WHERE id = ?
+            """,
+            (created_at, project_id),
+        )
+
+        version = connection.execute(
+            """
+            SELECT
+                id,
+                project_id,
+                source_type,
+                optimization_goal,
+                title,
+                body,
+                hashtags,
+                content,
+                is_final,
+                created_at
+            FROM content_versions
+            WHERE id = ?
+            """,
+            (version_id,),
+        ).fetchone()
+
+        record = dict(version)
+        record["hashtags"] = json.loads(record["hashtags"])
+        record["is_final"] = bool(record["is_final"])
+
+        return record

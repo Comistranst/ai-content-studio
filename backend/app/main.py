@@ -10,6 +10,7 @@ from app.ai_service import (
     optimize_ai_content,
 )
 from app.database import (
+    create_content_version,
     create_project,
     delete_generation,
     get_generation_history,
@@ -94,6 +95,35 @@ class ProjectDataResponse(BaseModel):
 class ProjectCreateResponse(BaseModel):
     success: bool
     data: ProjectDataResponse
+
+class ContentVersionCreateRequest(BaseModel):
+    source_type: Literal["generated", "optimized", "manual"]
+    optimization_goal: str | None = Field(
+        default=None,
+        max_length=100,
+    )
+    title: str = Field(min_length=1, max_length=200)
+    body: str = Field(min_length=1, max_length=10000)
+    hashtags: list[str] = Field(default_factory=list)
+    content: str = Field(min_length=1, max_length=12000)
+
+
+class ContentVersionDataResponse(BaseModel):
+    id: int
+    project_id: int
+    source_type: Literal["generated", "optimized", "manual"]
+    optimization_goal: str | None
+    title: str
+    body: str
+    hashtags: list[str]
+    content: str
+    is_final: bool
+    created_at: str
+
+
+class ContentVersionCreateResponse(BaseModel):
+    success: bool
+    data: ContentVersionDataResponse
 class ProjectPaginationResponse(BaseModel):
     limit: int
     offset: int
@@ -287,6 +317,45 @@ def get_content_project(project_id: int):
             "created_at": project["created_at"],
             "updated_at": project["updated_at"],
         },
+    }
+
+@app.post(
+    "/api/projects/{project_id}/versions",
+    response_model=ContentVersionCreateResponse,
+)
+def create_project_content_version(
+    project_id: int,
+    request: ContentVersionCreateRequest,
+):
+    project = get_project_by_id(project_id)
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="内容项目不存在。",
+        )
+
+    try:
+        version = create_content_version(
+            project_id=project_id,
+            source_type=request.source_type,
+            optimization_goal=request.optimization_goal,
+            title=request.title,
+            body=request.body,
+            hashtags=request.hashtags,
+            content=request.content,
+        )
+    except Exception as error:
+        print(f"Content version create error: {error}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="创建内容版本失败，请稍后重试。",
+        )
+
+    return {
+        "success": True,
+        "data": version,
     }
 @app.post("/api/generate", response_model=GenerateResponse)
 def generate_content(request: GenerateRequest):
