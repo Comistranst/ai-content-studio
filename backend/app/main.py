@@ -13,6 +13,7 @@ from app.database import (
     create_content_version,
     create_project,
     delete_generation,
+    get_content_versions,
     get_generation_history,
     get_project_by_id,
     get_projects,
@@ -124,6 +125,17 @@ class ContentVersionDataResponse(BaseModel):
 class ContentVersionCreateResponse(BaseModel):
     success: bool
     data: ContentVersionDataResponse
+
+class ContentVersionPaginationResponse(BaseModel):
+    limit: int
+    offset: int
+    count: int
+
+
+class ContentVersionListResponse(BaseModel):
+    success: bool
+    data: list[ContentVersionDataResponse]
+    pagination: ContentVersionPaginationResponse
 class ProjectPaginationResponse(BaseModel):
     limit: int
     offset: int
@@ -356,6 +368,47 @@ def create_project_content_version(
     return {
         "success": True,
         "data": version,
+    }
+
+@app.get(
+    "/api/projects/{project_id}/versions",
+    response_model=ContentVersionListResponse,
+)
+def list_project_content_versions(
+    project_id: int,
+    limit: int = Query(default=20, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
+):
+    project = get_project_by_id(project_id)
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="内容项目不存在。",
+        )
+
+    try:
+        versions = get_content_versions(
+            project_id=project_id,
+            limit=limit,
+            offset=offset,
+        )
+    except Exception as error:
+        print(f"Content version list error: {error}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="获取内容版本列表失败，请稍后重试。",
+        )
+
+    return {
+        "success": True,
+        "data": versions,
+        "pagination": {
+            "limit": limit,
+            "offset": offset,
+            "count": len(versions),
+        },
     }
 @app.post("/api/generate", response_model=GenerateResponse)
 def generate_content(request: GenerateRequest):

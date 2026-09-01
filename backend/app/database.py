@@ -418,3 +418,49 @@ def create_content_version(
         record["is_final"] = bool(record["is_final"])
 
         return record
+
+def get_content_versions(
+    project_id: int,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[dict]:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            SELECT
+                id,
+                project_id,
+                source_type,
+                optimization_goal,
+                title,
+                body,
+                hashtags,
+                content,
+                is_final,
+                created_at
+            FROM content_versions
+            WHERE project_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT ? OFFSET ?
+            """,
+            (project_id, limit, offset),
+        )
+
+        versions = []
+
+        for row in cursor.fetchall():
+            version = dict(row)
+
+            try:
+                version["hashtags"] = (
+                    json.loads(version["hashtags"])
+                    if version["hashtags"]
+                    else []
+                )
+            except json.JSONDecodeError:
+                version["hashtags"] = []
+
+            version["is_final"] = bool(version["is_final"])
+            versions.append(version)
+
+        return versions
