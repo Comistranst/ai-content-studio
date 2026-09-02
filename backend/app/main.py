@@ -19,6 +19,7 @@ from app.database import (
     get_projects,
     init_database,
     save_generation,
+    set_final_content_version,
 )
 
 @asynccontextmanager
@@ -125,7 +126,10 @@ class ContentVersionDataResponse(BaseModel):
 class ContentVersionCreateResponse(BaseModel):
     success: bool
     data: ContentVersionDataResponse
-
+class FinalVersionResponse(BaseModel):
+    success: bool
+    message: str
+    data: ContentVersionDataResponse
 class ContentVersionPaginationResponse(BaseModel):
     limit: int
     offset: int
@@ -409,6 +413,33 @@ def list_project_content_versions(
             "offset": offset,
             "count": len(versions),
         },
+    }
+
+@app.patch(
+    "/api/versions/{version_id}/final",
+    response_model=FinalVersionResponse,
+)
+def set_content_version_as_final(version_id: int):
+    try:
+        version = set_final_content_version(version_id)
+    except Exception as error:
+        print(f"Set final version error: {error}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="设置最终稿失败，请稍后重试。",
+        )
+
+    if version is None:
+        raise HTTPException(
+            status_code=404,
+            detail="内容版本不存在。",
+        )
+
+    return {
+        "success": True,
+        "message": "已设置为最终稿。",
+        "data": version,
     }
 @app.post("/api/generate", response_model=GenerateResponse)
 def generate_content(request: GenerateRequest):

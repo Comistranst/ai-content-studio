@@ -464,3 +464,96 @@ def get_content_versions(
             versions.append(version)
 
         return versions
+
+def set_final_content_version(
+    version_id: int,
+) -> dict | None:
+    updated_at = datetime.now().isoformat(timespec="seconds")
+
+    with get_connection() as connection:
+        version = connection.execute(
+            """
+            SELECT
+                id,
+                project_id,
+                source_type,
+                optimization_goal,
+                title,
+                body,
+                hashtags,
+                content,
+                is_final,
+                created_at
+            FROM content_versions
+            WHERE id = ?
+            """,
+            (version_id,),
+        ).fetchone()
+
+        if version is None:
+            return None
+
+        project_id = version["project_id"]
+
+        connection.execute(
+            """
+            UPDATE content_versions
+            SET is_final = 0
+            WHERE project_id = ?
+            """,
+            (project_id,),
+        )
+
+        connection.execute(
+            """
+            UPDATE content_versions
+            SET is_final = 1
+            WHERE id = ?
+            """,
+            (version_id,),
+        )
+
+        connection.execute(
+            """
+            UPDATE projects
+            SET
+                status = 'final',
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (updated_at, project_id),
+        )
+
+        final_version = connection.execute(
+            """
+            SELECT
+                id,
+                project_id,
+                source_type,
+                optimization_goal,
+                title,
+                body,
+                hashtags,
+                content,
+                is_final,
+                created_at
+            FROM content_versions
+            WHERE id = ?
+            """,
+            (version_id,),
+        ).fetchone()
+
+        record = dict(final_version)
+
+        try:
+            record["hashtags"] = (
+                json.loads(record["hashtags"])
+                if record["hashtags"]
+                else []
+            )
+        except json.JSONDecodeError:
+            record["hashtags"] = []
+
+        record["is_final"] = bool(record["is_final"])
+
+        return record
