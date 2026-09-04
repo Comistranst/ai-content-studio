@@ -30,6 +30,9 @@ const useGeneratedContentButton = document.getElementById(
 
 let currentOptimizedContent = "";
 
+const saveAsProjectButton = document.getElementById(
+  "save-as-project-button"
+);
 const copyAllButton = document.getElementById("copy-all-button");
 const copyTitleButton = document.getElementById("copy-title-button");
 const copyBodyButton = document.getElementById("copy-body-button");
@@ -70,6 +73,7 @@ function setResultMessage(message) {
   resultEmptyState.hidden = false;
   resultContent.hidden = true;
   copyAllButton.disabled = true;
+  saveAsProjectButton.disabled = true;
   currentGeneratedContent = null;
 }
 
@@ -95,11 +99,120 @@ function renderGeneratedContent(data) {
     resultHashtags.textContent = "未生成标签";
   }
 
-  resultEmptyState.hidden = true;
-  resultContent.hidden = false;
-  copyAllButton.disabled = false;
+    resultEmptyState.hidden = true;
+    resultContent.hidden = false;
+    copyAllButton.disabled = false;
+    saveAsProjectButton.disabled = false;
 }
 
+async function saveCurrentContentAsProject() {
+  if (!currentGeneratedContent) {
+    setResultMessage("请先生成一篇文案，再保存为内容项目。");
+    return;
+  }
+
+  const topic = topicInput.value.trim();
+  const platform = platformSelect.value;
+  const style = styleSelect.value;
+  const audience = audienceInput.value.trim() || "普通用户";
+  const length = lengthSelect.value;
+
+  saveAsProjectButton.disabled = true;
+  saveAsProjectButton.textContent = "保存中...";
+
+  try {
+    const projectResponse = await fetch(
+      `${API_BASE_URL}/projects`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topic,
+          platform,
+          style,
+          audience,
+          length,
+        }),
+      }
+    );
+
+    const projectResult = await projectResponse.json();
+
+    if (!projectResponse.ok) {
+      throw new Error(
+        projectResult.detail || "创建内容项目失败。"
+      );
+    }
+
+    const project = projectResult.data;
+    const hashtags = Array.isArray(
+      currentGeneratedContent.hashtags
+    )
+      ? currentGeneratedContent.hashtags
+      : [];
+
+    const content = [
+      currentGeneratedContent.title || "",
+      currentGeneratedContent.body ||
+        currentGeneratedContent.content ||
+        "",
+      hashtags.join(" "),
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const versionResponse = await fetch(
+      `${API_BASE_URL}/projects/${project.id}/versions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          source_type: "generated",
+          optimization_goal: null,
+          title: currentGeneratedContent.title || topic,
+          body:
+            currentGeneratedContent.body ||
+            currentGeneratedContent.content ||
+            "",
+          hashtags,
+          content,
+        }),
+      }
+    );
+
+    const versionResult = await versionResponse.json();
+
+    if (!versionResponse.ok) {
+      throw new Error(
+        versionResult.detail || "保存项目初稿失败。"
+      );
+    }
+
+    saveAsProjectButton.textContent = "已保存";
+
+    await loadProjects();
+    await loadProjectDetail(project.id);
+  } catch (error) {
+    console.error(error);
+
+    const message =
+      error instanceof TypeError
+        ? "无法连接后端服务，请稍后重试。"
+        : error.message;
+
+    alert(message);
+  } finally {
+    saveAsProjectButton.disabled = false;
+
+    setTimeout(() => {
+      saveAsProjectButton.textContent = "保存为内容项目";
+    }, 1500);
+  }
+}
 
 async function copyText(text, button, defaultLabel) {
   try {
@@ -780,7 +893,9 @@ copyBodyButton.addEventListener("click", () => {
   );
 });
 
-
+saveAsProjectButton.addEventListener("click", () => {
+  saveCurrentContentAsProject();
+});
 copyAllButton.addEventListener("click", () => {
   if (!currentGeneratedContent) {
     return;
