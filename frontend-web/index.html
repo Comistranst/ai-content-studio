@@ -151,6 +151,43 @@
   </div>
 </section>
 
+<section class="card projects-card">
+  <div class="history-header">
+    <div>
+      <h2>内容项目</h2>
+      <p class="projects-description">
+        在这里查看项目的文案版本，并选择最终发布稿。
+      </p>
+    </div>
+    <button id="refresh-projects-button" type="button">
+      刷新项目
+    </button>
+  </div>
+
+  <div id="projects-list">
+    <p class="history-message">正在加载内容项目...</p>
+  </div>
+
+  <div id="project-detail" class="project-detail" hidden>
+    <div class="project-detail-header">
+      <div>
+        <p id="project-detail-meta" class="history-meta"></p>
+        <h3 id="project-detail-title"></h3>
+      </div>
+      <button id="close-project-detail-button" type="button">
+        关闭详情
+      </button>
+    </div>
+
+    <div class="project-version-heading">
+      <h3>文案版本</h3>
+      <p id="project-version-message"></p>
+    </div>
+
+    <div id="project-versions-list"></div>
+  </div>
+</section>
+
 <section class="card history-card">
   <div class="history-header">
     <h2>历史记录</h2>
