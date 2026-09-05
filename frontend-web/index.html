@@ -150,16 +150,28 @@
   </div>
 
   <div id="optimize-result-content" class="result-content" hidden>
-    <div class="result-section">
-      <div class="result-section-header">
-        <h3>优化结果</h3>
+  <div class="result-section">
+    <div class="result-section-header">
+      <h3>优化结果</h3>
+
+      <div class="result-header-actions">
+        <button
+          id="save-optimized-version-button"
+          type="button"
+          disabled
+        >
+          保存为项目版本
+        </button>
+
         <button id="copy-optimized-button" type="button" disabled>
           复制优化结果
         </button>
       </div>
-      <p id="optimized-content" class="result-body"></p>
     </div>
+
+    <p id="optimized-content" class="result-body"></p>
   </div>
+</div>
 </section>
 
 <section class="card projects-card">

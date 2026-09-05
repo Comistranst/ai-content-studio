@@ -665,3 +665,25 @@ textarea:focus {
     transition-duration: 0.01ms !important;
   }
 }
+
+#save-optimized-version-button {
+  min-height: 38px;
+  padding: 0 13px;
+  color: #fffdf8;
+  border: 1px solid var(--coral);
+  border-radius: 8px;
+  background: var(--coral);
+  box-shadow: 0 7px 14px rgba(201, 86, 59, 0.2);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+#save-optimized-version-button:hover:not(:disabled) {
+  border-color: var(--coral-dark);
+  background: var(--coral-dark);
+  transform: translateY(-1px);
+}
+
+#save-optimized-version-button:disabled {
+  box-shadow: none;
+}

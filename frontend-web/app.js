@@ -11,24 +11,12 @@ const platformSelect = document.getElementById("platform");
 const styleSelect = document.getElementById("style");
 const audienceInput = document.getElementById("audience");
 const lengthSelect = document.getElementById("length");
+
 const resultEmptyState = document.getElementById("result-empty-state");
 const resultContent = document.getElementById("result-content");
 const resultTitle = document.getElementById("result-title");
 const resultBody = document.getElementById("result-body");
 const resultHashtags = document.getElementById("result-hashtags");
-
-const optimizeContentInput = document.getElementById("optimize-content");
-const optimizeGoalSelect = document.getElementById("optimize-goal");
-const optimizeButton = document.getElementById("optimize-button");
-const optimizeEmptyState = document.getElementById("optimize-empty-state");
-const optimizeResultContent = document.getElementById("optimize-result-content");
-const optimizedContent = document.getElementById("optimized-content");
-const copyOptimizedButton = document.getElementById("copy-optimized-button");
-const useGeneratedContentButton = document.getElementById(
-  "use-generated-content-button"
-);
-
-let currentOptimizedContent = "";
 
 const saveAsProjectButton = document.getElementById(
   "save-as-project-button"
@@ -37,15 +25,35 @@ const copyAllButton = document.getElementById("copy-all-button");
 const copyTitleButton = document.getElementById("copy-title-button");
 const copyBodyButton = document.getElementById("copy-body-button");
 
-let currentGeneratedContent = null;
+const optimizeContentInput = document.getElementById("optimize-content");
+const optimizeGoalSelect = document.getElementById("optimize-goal");
+const optimizeButton = document.getElementById("optimize-button");
+const optimizeEmptyState = document.getElementById("optimize-empty-state");
+const optimizeResultContent = document.getElementById(
+  "optimize-result-content"
+);
+const optimizedContent = document.getElementById("optimized-content");
+const copyOptimizedButton = document.getElementById(
+  "copy-optimized-button"
+);
+const saveOptimizedVersionButton = document.getElementById(
+  "save-optimized-version-button"
+);
+const useGeneratedContentButton = document.getElementById(
+  "use-generated-content-button"
+);
 
 const historyList = document.getElementById("history-list");
-const refreshHistoryButton = document.getElementById("refresh-history-button");
+const refreshHistoryButton = document.getElementById(
+  "refresh-history-button"
+);
 const loadMoreButton = document.getElementById("load-more-button");
+
 const projectsList = document.getElementById("projects-list");
 const refreshProjectsButton = document.getElementById(
   "refresh-projects-button"
 );
+
 const projectDetail = document.getElementById("project-detail");
 const projectDetailMeta = document.getElementById(
   "project-detail-meta"
@@ -63,20 +71,62 @@ const projectVersionsList = document.getElementById(
   "project-versions-list"
 );
 
+let currentGeneratedContent = null;
+let currentOptimizedContent = "";
 let currentProjectId = null;
 
 let historyOffset = 0;
 let hasMoreHistory = true;
 
+function getErrorMessage(error, fallbackMessage) {
+  if (error instanceof TypeError) {
+    return "无法连接后端服务，请稍后重试。";
+  }
+
+  return error.message || fallbackMessage;
+}
+
+function formatCreatedAt(createdAt) {
+  const date = new Date(createdAt);
+
+  return date.toLocaleString("zh-CN", {
+    hour12: false,
+  });
+}
+
+function getProjectStatusLabel(status) {
+  return status === "final" ? "已定稿" : "草稿中";
+}
+
+function getVersionSourceLabel(version) {
+  const labels = {
+    generated: "AI 初稿",
+    optimized: "优化稿",
+    manual: "手动编辑稿",
+  };
+
+  if (
+    version.source_type === "optimized" &&
+    version.optimization_goal
+  ) {
+    return `优化稿 · ${version.optimization_goal}`;
+  }
+
+  return labels[version.source_type] || "文案版本";
+}
+
 function setResultMessage(message) {
   resultEmptyState.textContent = message;
   resultEmptyState.hidden = false;
   resultContent.hidden = true;
+
   copyAllButton.disabled = true;
+  copyTitleButton.disabled = true;
+  copyBodyButton.disabled = true;
   saveAsProjectButton.disabled = true;
+
   currentGeneratedContent = null;
 }
-
 
 function renderGeneratedContent(data) {
   currentGeneratedContent = data;
@@ -86,7 +136,9 @@ function renderGeneratedContent(data) {
 
   resultHashtags.innerHTML = "";
 
-  const hashtags = data.hashtags || [];
+  const hashtags = Array.isArray(data.hashtags)
+    ? data.hashtags
+    : [];
 
   hashtags.forEach((hashtag) => {
     const tag = document.createElement("span");
@@ -99,10 +151,63 @@ function renderGeneratedContent(data) {
     resultHashtags.textContent = "未生成标签";
   }
 
-    resultEmptyState.hidden = true;
-    resultContent.hidden = false;
-    copyAllButton.disabled = false;
-    saveAsProjectButton.disabled = false;
+  resultEmptyState.hidden = true;
+  resultContent.hidden = false;
+
+  copyAllButton.disabled = false;
+  copyTitleButton.disabled = false;
+  copyBodyButton.disabled = false;
+  saveAsProjectButton.disabled = false;
+}
+
+function setOptimizeMessage(message) {
+  optimizeEmptyState.textContent = message;
+  optimizeEmptyState.hidden = false;
+  optimizeResultContent.hidden = true;
+
+  copyOptimizedButton.disabled = true;
+  saveOptimizedVersionButton.disabled = true;
+
+  currentOptimizedContent = "";
+}
+
+function renderOptimizedContent(content) {
+  currentOptimizedContent = content;
+  optimizedContent.textContent = content;
+
+  optimizeEmptyState.hidden = true;
+  optimizeResultContent.hidden = false;
+
+  copyOptimizedButton.disabled = false;
+
+  /*
+    这里故意直接开放按钮。
+
+    真正提交时 saveOptimizedContentAsVersion()
+    仍会检查 currentProjectId 是否存在，
+    所以不会因误点而保存到错误项目。
+  */
+  saveOptimizedVersionButton.disabled = false;
+}
+
+async function copyText(text, button, defaultLabel) {
+  try {
+    await navigator.clipboard.writeText(text);
+
+    button.textContent = "已复制";
+
+    setTimeout(() => {
+      button.textContent = defaultLabel;
+    }, 1500);
+  } catch (error) {
+    console.error(error);
+
+    button.textContent = "复制失败";
+
+    setTimeout(() => {
+      button.textContent = defaultLabel;
+    }, 1500);
+  }
 }
 
 async function saveCurrentContentAsProject() {
@@ -147,19 +252,25 @@ async function saveCurrentContentAsProject() {
     }
 
     const project = projectResult.data;
+
+    if (!project || !project.id) {
+      throw new Error("创建项目成功，但未返回项目 ID。");
+    }
+
     const hashtags = Array.isArray(
       currentGeneratedContent.hashtags
     )
       ? currentGeneratedContent.hashtags
       : [];
 
-    const content = [
-      currentGeneratedContent.title || "",
+    const title = currentGeneratedContent.title || topic;
+
+    const body =
       currentGeneratedContent.body ||
-        currentGeneratedContent.content ||
-        "",
-      hashtags.join(" "),
-    ]
+      currentGeneratedContent.content ||
+      "";
+
+    const content = [title, body, hashtags.join(" ")]
       .filter(Boolean)
       .join("\n\n");
 
@@ -173,11 +284,8 @@ async function saveCurrentContentAsProject() {
         body: JSON.stringify({
           source_type: "generated",
           optimization_goal: null,
-          title: currentGeneratedContent.title || topic,
-          body:
-            currentGeneratedContent.body ||
-            currentGeneratedContent.content ||
-            "",
+          title,
+          body,
           hashtags,
           content,
         }),
@@ -192,6 +300,13 @@ async function saveCurrentContentAsProject() {
       );
     }
 
+    /*
+      关键修复：
+      保存项目成功后立即记录当前项目 ID。
+      后续优化结果即可保存到同一个项目。
+    */
+    currentProjectId = project.id;
+
     saveAsProjectButton.textContent = "已保存";
 
     await loadProjects();
@@ -199,12 +314,7 @@ async function saveCurrentContentAsProject() {
   } catch (error) {
     console.error(error);
 
-    const message =
-      error instanceof TypeError
-        ? "无法连接后端服务，请稍后重试。"
-        : error.message;
-
-    alert(message);
+    alert(getErrorMessage(error, "保存内容项目失败。"));
   } finally {
     saveAsProjectButton.disabled = false;
 
@@ -214,47 +324,70 @@ async function saveCurrentContentAsProject() {
   }
 }
 
-async function copyText(text, button, defaultLabel) {
+async function saveOptimizedContentAsVersion() {
+  if (!currentProjectId) {
+    alert(
+      "尚未选中内容项目。请先点击“保存为内容项目”，或在内容项目列表中点击“打开项目”。"
+    );
+    return;
+  }
+
+  if (!currentOptimizedContent) {
+    setOptimizeMessage("请先完成文案优化，再保存版本。");
+    return;
+  }
+
+  const goal = optimizeGoalSelect.value;
+
+  const fallbackTitle = currentGeneratedContent
+    ? currentGeneratedContent.title
+    : topicInput.value.trim() || "优化文案";
+
+  saveOptimizedVersionButton.disabled = true;
+  saveOptimizedVersionButton.textContent = "保存中...";
+
   try {
-    await navigator.clipboard.writeText(text);
+    const response = await fetch(
+      `${API_BASE_URL}/projects/${currentProjectId}/versions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          source_type: "optimized",
+          optimization_goal: goal,
+          title: fallbackTitle,
+          body: currentOptimizedContent,
+          hashtags: [],
+          content: currentOptimizedContent,
+        }),
+      }
+    );
 
-    button.textContent = "已复制";
+    const result = await response.json();
 
-    setTimeout(() => {
-      button.textContent = defaultLabel;
-    }, 1500);
+    if (!response.ok) {
+      throw new Error(
+        result.detail || "保存优化版本失败。"
+      );
+    }
+
+    saveOptimizedVersionButton.textContent = "已保存";
+
+    await loadProjects();
+    await loadProjectDetail(currentProjectId);
   } catch (error) {
     console.error(error);
 
-    button.textContent = "复制失败";
+    alert(getErrorMessage(error, "保存优化版本失败。"));
+  } finally {
+    saveOptimizedVersionButton.disabled = false;
 
     setTimeout(() => {
-      button.textContent = defaultLabel;
+      saveOptimizedVersionButton.textContent = "保存为项目版本";
     }, 1500);
   }
-}
-function setOptimizeMessage(message) {
-  optimizeEmptyState.textContent = message;
-  optimizeEmptyState.hidden = false;
-  optimizeResultContent.hidden = true;
-  copyOptimizedButton.disabled = true;
-  currentOptimizedContent = "";
-}
-
-function renderOptimizedContent(content) {
-  currentOptimizedContent = content;
-  optimizedContent.textContent = content;
-
-  optimizeEmptyState.hidden = true;
-  optimizeResultContent.hidden = false;
-  copyOptimizedButton.disabled = false;
-}
-function formatCreatedAt(createdAt) {
-  const date = new Date(createdAt);
-
-  return date.toLocaleString("zh-CN", {
-    hour12: false,
-  });
 }
 
 function createHistoryItem(record) {
@@ -271,10 +404,13 @@ function createHistoryItem(record) {
   };
 
   const audience = record.audience || "普通用户";
-  const length = lengthLabels[record.content_length] || "中文案";
+  const length =
+    lengthLabels[record.content_length] || "中文案";
 
   meta.textContent =
-    `${record.platform} · ${record.style} · ${length} · ${audience} · ${formatCreatedAt(record.created_at)}`;
+    `${record.platform} · ${record.style} · ` +
+    `${length} · ${audience} · ` +
+    `${formatCreatedAt(record.created_at)}`;
 
   const title = document.createElement("h3");
   title.textContent = record.title || record.topic;
@@ -300,49 +436,47 @@ function createHistoryItem(record) {
   const actions = document.createElement("div");
   actions.className = "history-actions";
 
-  const copyTitleButton = document.createElement("button");
-  copyTitleButton.className = "copy-button";
-  copyTitleButton.type = "button";
-  copyTitleButton.textContent = "复制标题";
+  const historyCopyTitleButton = document.createElement("button");
+  historyCopyTitleButton.className = "copy-button";
+  historyCopyTitleButton.type = "button";
+  historyCopyTitleButton.textContent = "复制标题";
 
-  copyTitleButton.addEventListener("click", () => {
+  historyCopyTitleButton.addEventListener("click", () => {
     copyText(
       record.title || record.topic,
-      copyTitleButton,
+      historyCopyTitleButton,
       "复制标题"
     );
   });
 
-  const copyBodyButton = document.createElement("button");
-  copyBodyButton.className = "copy-button";
-  copyBodyButton.type = "button";
-  copyBodyButton.textContent = "复制正文";
+  const historyCopyBodyButton = document.createElement("button");
+  historyCopyBodyButton.className = "copy-button";
+  historyCopyBodyButton.type = "button";
+  historyCopyBodyButton.textContent = "复制正文";
 
-  copyBodyButton.addEventListener("click", () => {
+  historyCopyBodyButton.addEventListener("click", () => {
     copyText(
       record.body || record.content,
-      copyBodyButton,
+      historyCopyBodyButton,
       "复制正文"
     );
   });
 
-  const copyAllButton = document.createElement("button");
-  copyAllButton.className = "copy-button";
-  copyAllButton.type = "button";
-  copyAllButton.textContent = "复制全部";
+  const historyCopyAllButton = document.createElement("button");
+  historyCopyAllButton.className = "copy-button";
+  historyCopyAllButton.type = "button";
+  historyCopyAllButton.textContent = "复制全部";
 
-  copyAllButton.addEventListener("click", () => {
-    const hashtagsText = hashtags.join(" ");
-
+  historyCopyAllButton.addEventListener("click", () => {
     const text = [
       record.title || record.topic,
       record.body || record.content,
-      hashtagsText,
+      hashtags.join(" "),
     ]
       .filter(Boolean)
       .join("\n\n");
 
-    copyText(text, copyAllButton, "复制全部");
+    copyText(text, historyCopyAllButton, "复制全部");
   });
 
   const deleteButton = document.createElement("button");
@@ -373,19 +507,22 @@ function createHistoryItem(record) {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.detail || "删除历史记录失败。");
+        throw new Error(
+          result.detail || "删除历史记录失败。"
+        );
       }
 
       item.remove();
 
-refreshHistoryButton.textContent = "已删除";
+      refreshHistoryButton.textContent = "已删除";
 
-setTimeout(() => {
-  refreshHistoryButton.textContent = "刷新历史";
-}, 1500);
+      setTimeout(() => {
+        refreshHistoryButton.textContent = "刷新历史";
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(error.message);
+
+      alert(getErrorMessage(error, "删除历史记录失败。"));
 
       deleteButton.disabled = false;
       deleteButton.textContent = "删除";
@@ -393,19 +530,13 @@ setTimeout(() => {
   });
 
   actions.append(
-    copyTitleButton,
-    copyBodyButton,
-    copyAllButton,
+    historyCopyTitleButton,
+    historyCopyBodyButton,
+    historyCopyAllButton,
     deleteButton
   );
 
-  item.append(
-    meta,
-    title,
-    body,
-    hashtagList,
-    actions
-  );
+  item.append(meta, title, body, hashtagList, actions);
 
   return item;
 }
@@ -427,35 +558,13 @@ function renderHistory(records, shouldReplace = false) {
   });
 }
 
-function getProjectStatusLabel(status) {
-  return status === "final" ? "已定稿" : "草稿中";
-}
-
-
-function getVersionSourceLabel(version) {
-  const labels = {
-    generated: "AI 初稿",
-    optimized: "优化稿",
-    manual: "手动编辑稿",
-  };
-
-  if (
-    version.source_type === "optimized" &&
-    version.optimization_goal
-  ) {
-    return `优化稿 · ${version.optimization_goal}`;
-  }
-
-  return labels[version.source_type] || "文案版本";
-}
-
-
 function createProjectItem(project) {
   const item = document.createElement("article");
   item.className = "history-item project-item";
 
   const meta = document.createElement("p");
   meta.className = "history-meta";
+
   meta.textContent =
     `${project.platform} · ${project.style} · ` +
     `${getProjectStatusLabel(project.status)} · ` +
@@ -487,7 +596,6 @@ function createProjectItem(project) {
   return item;
 }
 
-
 function renderProjects(projects) {
   projectsList.innerHTML = "";
 
@@ -502,7 +610,6 @@ function renderProjects(projects) {
     projectsList.appendChild(createProjectItem(project));
   });
 }
-
 
 function createVersionItem(version) {
   const item = document.createElement("article");
@@ -588,7 +695,8 @@ function createVersionItem(version) {
         await loadProjects();
       } catch (error) {
         console.error(error);
-        alert(error.message);
+
+        alert(getErrorMessage(error, "设置最终稿失败。"));
 
         finalButton.disabled = false;
         finalButton.textContent = "设为最终稿";
@@ -602,7 +710,6 @@ function createVersionItem(version) {
 
   return item;
 }
-
 
 function renderProjectVersions(versions) {
   projectVersionsList.innerHTML = "";
@@ -621,10 +728,10 @@ function renderProjectVersions(versions) {
   });
 }
 
-
 async function loadProjects() {
   refreshProjectsButton.disabled = true;
   refreshProjectsButton.textContent = "加载中...";
+
   projectsList.innerHTML = `
     <p class="history-message">正在加载内容项目...</p>
   `;
@@ -646,10 +753,10 @@ async function loadProjects() {
   } catch (error) {
     console.error(error);
 
-    const message =
-      error instanceof TypeError
-        ? "无法连接后端服务，请稍后重试。"
-        : error.message;
+    const message = getErrorMessage(
+      error,
+      "加载内容项目失败。"
+    );
 
     projectsList.innerHTML = `
       <p class="history-message">${message}</p>
@@ -660,14 +767,14 @@ async function loadProjects() {
   }
 }
 
-
 async function loadProjectDetail(projectId) {
   currentProjectId = projectId;
-  projectDetail.hidden = false;
 
+  projectDetail.hidden = false;
   projectDetailMeta.textContent = "正在加载项目详情...";
   projectDetailTitle.textContent = "";
   projectVersionMessage.textContent = "";
+
   projectVersionsList.innerHTML = `
     <p class="history-message">正在加载文案版本...</p>
   `;
@@ -677,7 +784,7 @@ async function loadProjectDetail(projectId) {
       fetch(`${API_BASE_URL}/projects/${projectId}`),
       fetch(
         `${API_BASE_URL}/projects/${projectId}/versions` +
-        `?limit=${PROJECT_VERSIONS_PAGE_SIZE}&offset=0`
+          `?limit=${PROJECT_VERSIONS_PAGE_SIZE}&offset=0`
       ),
     ]);
 
@@ -704,10 +811,12 @@ async function loadProjectDetail(projectId) {
       `${getProjectStatusLabel(project.status)}`;
 
     projectDetailTitle.textContent = project.topic;
+
     projectVersionMessage.textContent =
       `共 ${versionsResult.pagination.count} 个版本`;
 
     renderProjectVersions(versionsResult.data);
+
     projectDetail.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
@@ -715,14 +824,15 @@ async function loadProjectDetail(projectId) {
   } catch (error) {
     console.error(error);
 
-    const message =
-      error instanceof TypeError
-        ? "无法连接后端服务，请稍后重试。"
-        : error.message;
+    const message = getErrorMessage(
+      error,
+      "加载项目详情失败。"
+    );
 
     projectDetailMeta.textContent = "";
     projectDetailTitle.textContent = "加载项目失败";
     projectVersionMessage.textContent = "";
+
     projectVersionsList.innerHTML = `
       <p class="history-message">${message}</p>
     `;
@@ -730,7 +840,9 @@ async function loadProjectDetail(projectId) {
 }
 
 function updateLoadMoreButton() {
-  loadMoreButton.style.display = hasMoreHistory ? "block" : "none";
+  loadMoreButton.style.display = hasMoreHistory
+    ? "block"
+    : "none";
 }
 
 async function loadHistory({ reset = false } = {}) {
@@ -740,6 +852,7 @@ async function loadHistory({ reset = false } = {}) {
 
     refreshHistoryButton.disabled = true;
     refreshHistoryButton.textContent = "加载中...";
+
     historyList.innerHTML = `
       <p class="history-message">正在加载历史记录...</p>
     `;
@@ -756,7 +869,9 @@ async function loadHistory({ reset = false } = {}) {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.detail || "加载历史记录失败。");
+      throw new Error(
+        result.detail || "加载历史记录失败。"
+      );
     }
 
     const records = result.data;
@@ -767,12 +882,17 @@ async function loadHistory({ reset = false } = {}) {
     hasMoreHistory = records.length === HISTORY_PAGE_SIZE;
 
     updateLoadMoreButton();
-    } catch (error) {
+  } catch (error) {
     console.error(error);
+
+    const message = getErrorMessage(
+      error,
+      "加载历史记录失败。"
+    );
 
     if (reset) {
       historyList.innerHTML = `
-        <p class="history-message">${error.message}</p>
+        <p class="history-message">${message}</p>
       `;
     } else {
       loadMoreButton.textContent = "加载失败，请重试";
@@ -792,20 +912,22 @@ async function loadHistory({ reset = false } = {}) {
     }
   }
 }
+
 generateButton.addEventListener("click", async () => {
-const topic = topicInput.value.trim();
-const platform = platformSelect.value;
-const style = styleSelect.value;
-const audience = audienceInput.value.trim() || "普通用户";
-const length = lengthSelect.value;
+  const topic = topicInput.value.trim();
+  const platform = platformSelect.value;
+  const style = styleSelect.value;
+  const audience = audienceInput.value.trim() || "普通用户";
+  const length = lengthSelect.value;
 
   if (!topic) {
-     setResultMessage("请输入一个主题，例如：瑜伽垫。"); 
+    setResultMessage("请输入一个主题，例如：瑜伽垫。");
     return;
   }
 
   generateButton.disabled = true;
   generateButton.textContent = "生成中...";
+
   setResultMessage("正在请求 AI 生成文案...");
 
   try {
@@ -815,18 +937,18 @@ const length = lengthSelect.value;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-           topic,
-           platform,
-           style,
-           audience,
-           length,
+        topic,
+        platform,
+        style,
+        audience,
+        length,
       }),
     });
 
     const result = await response.json();
 
-      if (!response.ok) {
-       if (response.status === 502) {
+    if (!response.ok) {
+      if (response.status === 502) {
         throw new Error(
           "AI 服务暂时不可用，请稍后重试。"
         );
@@ -846,28 +968,18 @@ const length = lengthSelect.value;
     renderGeneratedContent(result.data);
 
     await loadHistory({ reset: true });
-    } catch (error) {
+  } catch (error) {
     console.error(error);
 
-    const message =
-      error instanceof TypeError
-        ? "无法连接后端服务，请确认后端已启动。"
-        : error.message;
-
-    setResultMessage(message);
+    setResultMessage(
+      getErrorMessage(error, "生成文案失败。")
+    );
   } finally {
     generateButton.disabled = false;
     generateButton.textContent = "生成文案";
   }
 });
 
-refreshHistoryButton.addEventListener("click", () => {
-  loadHistory({ reset: true });
-});
-
-loadMoreButton.addEventListener("click", () => {
-  loadHistory();
-});
 copyTitleButton.addEventListener("click", () => {
   if (!currentGeneratedContent) {
     return;
@@ -880,32 +992,34 @@ copyTitleButton.addEventListener("click", () => {
   );
 });
 
-
 copyBodyButton.addEventListener("click", () => {
   if (!currentGeneratedContent) {
     return;
   }
 
   copyText(
-    currentGeneratedContent.body || currentGeneratedContent.content || "",
+    currentGeneratedContent.body ||
+      currentGeneratedContent.content ||
+      "",
     copyBodyButton,
     "复制正文"
   );
 });
 
-saveAsProjectButton.addEventListener("click", () => {
-  saveCurrentContentAsProject();
-});
 copyAllButton.addEventListener("click", () => {
   if (!currentGeneratedContent) {
     return;
   }
 
-  const hashtags = (currentGeneratedContent.hashtags || []).join(" ");
+  const hashtags = (
+    currentGeneratedContent.hashtags || []
+  ).join(" ");
 
   const text = [
     currentGeneratedContent.title || "",
-    currentGeneratedContent.body || "",
+    currentGeneratedContent.body ||
+      currentGeneratedContent.content ||
+      "",
     hashtags,
   ]
     .filter(Boolean)
@@ -913,29 +1027,41 @@ copyAllButton.addEventListener("click", () => {
 
   copyText(text, copyAllButton, "复制全部");
 });
-loadHistory({ reset: true });
+
+saveAsProjectButton.addEventListener("click", () => {
+  saveCurrentContentAsProject();
+});
 
 useGeneratedContentButton.addEventListener("click", () => {
   if (!currentGeneratedContent) {
-    setOptimizeMessage("请先生成一篇文案，再使用当前生成结果。");
+    setOptimizeMessage(
+      "请先生成一篇文案，再使用当前生成结果。"
+    );
     return;
   }
 
-  const hashtags = (currentGeneratedContent.hashtags || []).join(" ");
+  const hashtags = (
+    currentGeneratedContent.hashtags || []
+  ).join(" ");
 
   const content = [
     currentGeneratedContent.title || "",
-    currentGeneratedContent.body || currentGeneratedContent.content || "",
+    currentGeneratedContent.body ||
+      currentGeneratedContent.content ||
+      "",
     hashtags,
   ]
     .filter(Boolean)
     .join("\n\n");
 
   optimizeContentInput.value = content;
-  setOptimizeMessage("已填入当前生成结果，请选择目标后点击“优化文案”。");
+
+  setOptimizeMessage(
+    "已填入当前生成结果，请选择目标后点击“优化文案”。"
+  );
+
   optimizeContentInput.focus();
 });
-
 
 optimizeButton.addEventListener("click", async () => {
   const content = optimizeContentInput.value.trim();
@@ -949,6 +1075,7 @@ optimizeButton.addEventListener("click", async () => {
 
   optimizeButton.disabled = true;
   optimizeButton.textContent = "优化中...";
+
   setOptimizeMessage("正在请求 AI 优化文案...");
 
   try {
@@ -966,25 +1093,23 @@ optimizeButton.addEventListener("click", async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.detail || "优化文案时发生未知错误。");
+      throw new Error(
+        result.detail || "优化文案时发生未知错误。"
+      );
     }
 
     renderOptimizedContent(result.data.optimized_content);
   } catch (error) {
     console.error(error);
 
-    const message =
-      error instanceof TypeError
-        ? "无法连接后端服务，请稍后重试。"
-        : error.message;
-
-    setOptimizeMessage(message);
+    setOptimizeMessage(
+      getErrorMessage(error, "优化文案失败。")
+    );
   } finally {
     optimizeButton.disabled = false;
     optimizeButton.textContent = "优化文案";
   }
 });
-
 
 copyOptimizedButton.addEventListener("click", () => {
   if (!currentOptimizedContent) {
@@ -998,17 +1123,29 @@ copyOptimizedButton.addEventListener("click", () => {
   );
 });
 
+saveOptimizedVersionButton.addEventListener("click", () => {
+  saveOptimizedContentAsVersion();
+});
+
+refreshHistoryButton.addEventListener("click", () => {
+  loadHistory({ reset: true });
+});
+
+loadMoreButton.addEventListener("click", () => {
+  loadHistory();
+});
+
 refreshProjectsButton.addEventListener("click", () => {
   loadProjects();
 });
 
-
 closeProjectDetailButton.addEventListener("click", () => {
   currentProjectId = null;
+
   projectDetail.hidden = true;
   projectVersionsList.innerHTML = "";
   projectVersionMessage.textContent = "";
 });
 
-
+loadHistory({ reset: true });
 loadProjects();
