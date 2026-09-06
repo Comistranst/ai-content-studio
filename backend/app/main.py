@@ -13,6 +13,7 @@ from app.database import (
     create_content_version,
     create_project,
     delete_generation,
+    delete_project,
     get_content_versions,
     get_generation_history,
     get_project_by_id,
@@ -334,7 +335,31 @@ def get_content_project(project_id: int):
             "updated_at": project["updated_at"],
         },
     }
+@app.delete("/api/projects/{project_id}")
+def delete_content_project(project_id: int):
+    try:
+        deleted = delete_project(project_id)
+    except Exception as error:
+        print(f"Project delete error: {error}")
 
+        raise HTTPException(
+            status_code=500,
+            detail="删除内容项目失败，请稍后重试。",
+        )
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="内容项目不存在或已经删除。",
+        )
+
+    return {
+        "success": True,
+        "message": "内容项目及其文案版本已删除。",
+        "data": {
+            "id": project_id,
+        },
+    }
 @app.post(
     "/api/projects/{project_id}/versions",
     response_model=ContentVersionCreateResponse,

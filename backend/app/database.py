@@ -339,7 +339,17 @@ def get_project_by_id(project_id: int) -> dict | None:
         ).fetchone()
 
         return dict(project) if project else None
+def delete_project(project_id: int) -> bool:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            DELETE FROM projects
+            WHERE id = ?
+            """,
+            (project_id,),
+        )
 
+        return cursor.rowcount > 0
 def create_content_version(
     project_id: int,
     source_type: str,
