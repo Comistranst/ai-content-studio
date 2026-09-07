@@ -590,7 +590,65 @@ function createProjectItem(project) {
     loadProjectDetail(project.id);
   });
 
-  actions.appendChild(openButton);
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "delete-button";
+  deleteButton.type = "button";
+  deleteButton.textContent = "删除项目";
+
+  deleteButton.addEventListener("click", async () => {
+    const confirmed = window.confirm(
+      `确定删除内容项目“${project.topic}”吗？\n\n` +
+        "此操作会同时永久删除该项目的全部文案版本，无法恢复。"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteButton.disabled = true;
+    deleteButton.textContent = "删除中...";
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${project.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.detail || "删除内容项目失败。"
+        );
+      }
+
+      if (currentProjectId === project.id) {
+        currentProjectId = null;
+
+        projectDetail.hidden = true;
+        projectVersionsList.innerHTML = "";
+        projectVersionMessage.textContent = "";
+      }
+
+      await loadProjects();
+    } catch (error) {
+      console.error(error);
+
+      const message =
+        error instanceof TypeError
+          ? "无法连接后端服务，请稍后重试。"
+          : error.message;
+
+      alert(message);
+
+      deleteButton.disabled = false;
+      deleteButton.textContent = "删除项目";
+    }
+  });
+
+  actions.append(openButton, deleteButton);
   item.append(meta, title, description, actions);
 
   return item;
