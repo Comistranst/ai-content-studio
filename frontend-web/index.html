@@ -208,6 +208,44 @@
     </div>
 
     <div id="project-versions-list"></div>
+    <div id="manual-version-editor" class="manual-version-editor" hidden>
+  <div class="project-version-heading">
+    <h3>编辑为新版本</h3>
+    <button id="cancel-manual-version-button" type="button">
+      取消编辑
+    </button>
+  </div>
+
+  <p id="manual-version-source" class="history-meta"></p>
+
+  <label for="manual-version-title">标题</label>
+  <input
+    id="manual-version-title"
+    type="text"
+    maxlength="200"
+    placeholder="输入文案标题"
+  >
+
+  <label for="manual-version-body">正文</label>
+  <textarea
+    id="manual-version-body"
+    rows="10"
+    maxlength="10000"
+    placeholder="输入或修改文案正文"
+  ></textarea>
+
+  <label for="manual-version-hashtags">标签</label>
+  <input
+    id="manual-version-hashtags"
+    type="text"
+    maxlength="1000"
+    placeholder="例如：#秋日好物 #居家生活"
+  >
+
+  <button id="save-manual-version-button" type="button">
+    保存为手动编辑稿
+  </button>
+</div>
   </div>
 </section>
 

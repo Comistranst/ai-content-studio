@@ -70,11 +70,31 @@ const projectVersionMessage = document.getElementById(
 const projectVersionsList = document.getElementById(
   "project-versions-list"
 );
-
+const manualVersionEditor = document.getElementById(
+  "manual-version-editor"
+);
+const manualVersionSource = document.getElementById(
+  "manual-version-source"
+);
+const manualVersionTitleInput = document.getElementById(
+  "manual-version-title"
+);
+const manualVersionBodyInput = document.getElementById(
+  "manual-version-body"
+);
+const manualVersionHashtagsInput = document.getElementById(
+  "manual-version-hashtags"
+);
+const cancelManualVersionButton = document.getElementById(
+  "cancel-manual-version-button"
+);
+const saveManualVersionButton = document.getElementById(
+  "save-manual-version-button"
+);
 let currentGeneratedContent = null;
 let currentOptimizedContent = "";
 let currentProjectId = null;
-
+let editingSourceVersionId = null;
 let historyOffset = 0;
 let hasMoreHistory = true;
 
@@ -114,7 +134,43 @@ function getVersionSourceLabel(version) {
 
   return labels[version.source_type] || "文案版本";
 }
+function openManualVersionEditor(version) {
+  editingSourceVersionId = version.id;
 
+  manualVersionSource.textContent =
+    `基于 ${getVersionSourceLabel(version)} 创建手动编辑稿`;
+
+  manualVersionTitleInput.value = version.title || "";
+
+  manualVersionBodyInput.value =
+    version.body || version.content || "";
+
+  const hashtags = Array.isArray(version.hashtags)
+    ? version.hashtags
+    : [];
+
+  manualVersionHashtagsInput.value = hashtags.join(" ");
+
+  manualVersionEditor.hidden = false;
+
+  manualVersionEditor.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest",
+  });
+
+  manualVersionTitleInput.focus();
+}
+
+function closeManualVersionEditor() {
+  editingSourceVersionId = null;
+
+  manualVersionEditor.hidden = true;
+
+  manualVersionSource.textContent = "";
+  manualVersionTitleInput.value = "";
+  manualVersionBodyInput.value = "";
+  manualVersionHashtagsInput.value = "";
+}
 function setResultMessage(message) {
   resultEmptyState.textContent = message;
   resultEmptyState.hidden = false;
@@ -720,7 +776,16 @@ function createVersionItem(version) {
   });
 
   actions.appendChild(copyButton);
+  const editButton = document.createElement("button");
+ editButton.className = "copy-button";
+ editButton.type = "button";
+ editButton.textContent = "编辑为新版本";
 
+ editButton.addEventListener("click", () => {
+  openManualVersionEditor(version);
+});
+
+actions.appendChild(editButton);
   if (!version.is_final) {
     const finalButton = document.createElement("button");
     finalButton.className = "copy-button";
@@ -1196,7 +1261,9 @@ loadMoreButton.addEventListener("click", () => {
 refreshProjectsButton.addEventListener("click", () => {
   loadProjects();
 });
-
+cancelManualVersionButton.addEventListener("click", () => {
+  closeManualVersionEditor();
+});
 closeProjectDetailButton.addEventListener("click", () => {
   currentProjectId = null;
 
