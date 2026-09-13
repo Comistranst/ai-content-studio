@@ -6,6 +6,14 @@ const PROJECTS_PAGE_SIZE = 20;
 const PROJECT_VERSIONS_PAGE_SIZE = 20;
 
 const generateButton = document.getElementById("generate-button");
+const createViewButton = document.getElementById(
+  "create-view-button"
+);
+const projectsViewButton = document.getElementById(
+  "projects-view-button"
+);
+const createView = document.getElementById("create-view");
+const projectsView = document.getElementById("projects-view");
 const topicInput = document.getElementById("topic");
 const platformSelect = document.getElementById("platform");
 const styleSelect = document.getElementById("style");
@@ -97,6 +105,28 @@ let currentProjectId = null;
 let editingSourceVersionId = null;
 let historyOffset = 0;
 let hasMoreHistory = true;
+
+function switchView(viewName) {
+  const isCreateView = viewName === "create";
+
+  createView.hidden = !isCreateView;
+  projectsView.hidden = isCreateView;
+
+  createViewButton.classList.toggle(
+    "is-active",
+    isCreateView
+  );
+
+  projectsViewButton.classList.toggle(
+    "is-active",
+    !isCreateView
+  );
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
 
 function getErrorMessage(error, fallbackMessage) {
   if (error instanceof TypeError) {
@@ -1270,6 +1300,14 @@ closeProjectDetailButton.addEventListener("click", () => {
   projectDetail.hidden = true;
   projectVersionsList.innerHTML = "";
   projectVersionMessage.textContent = "";
+});
+
+createViewButton.addEventListener("click", () => {
+  switchView("create");
+});
+
+projectsViewButton.addEventListener("click", () => {
+  switchView("projects");
 });
 
 loadHistory({ reset: true });

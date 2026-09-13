@@ -8,9 +8,31 @@
 </head>
 <body>
   <main class="container">
+    <header class="app-header">
+  <div>
     <h1>AI Content Studio</h1>
     <p class="subtitle">快速生成你的营销文案</p>
+  </div>
 
+  <nav class="view-navigation" aria-label="主导航">
+    <button
+      id="create-view-button"
+      class="view-navigation-button is-active"
+      type="button"
+    >
+      创作工作台
+    </button>
+
+    <button
+      id="projects-view-button"
+      class="view-navigation-button"
+      type="button"
+    >
+      内容项目
+    </button>
+  </nav>
+</header>
+    <div id="create-view"></div>
     <section class="card">
       <label for="topic">主题</label>
       <input
@@ -173,7 +195,8 @@
   </div>
 </div>
 </section>
-
+</div>
+<div id="projects-view" hidden></div>
 <section class="card projects-card">
   <div class="history-header">
     <div>
@@ -265,6 +288,7 @@
     加载更多
   </button>
 </section>
+</div>
   </main>
 
   <script src="app.js"></script>
