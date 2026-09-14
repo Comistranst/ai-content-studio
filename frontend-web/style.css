@@ -935,3 +935,50 @@ body {
     font-size: 2rem;
   }
 }
+/* M8.2：低频生成选项按需展开 */
+
+.advanced-settings {
+  margin: 18px 0 22px;
+  border-top: 1px solid #dce5df;
+  border-bottom: 1px solid #dce5df;
+}
+
+.advanced-settings summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  color: #315248;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 750;
+  list-style: none;
+}
+
+.advanced-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-settings summary::after {
+  content: "+";
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: #a9422c;
+  border: 1px solid #d9b7ae;
+  border-radius: 50%;
+  background: #fff8f5;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.advanced-settings[open] summary::after {
+  content: "−";
+}
+
+.advanced-settings-content {
+  display: grid;
+  gap: 10px;
+  padding: 4px 0 20px;
+}

@@ -70,21 +70,27 @@
   <option value="促销转化">促销转化</option>
 </select>
 
-<label for="audience">目标受众</label>
-<input
-  id="audience"
-  type="text"
-  maxlength="100"
-  value="普通用户"
-  placeholder="例如：20—30 岁职场女性"
->
+<details class="advanced-settings">
+  <summary>更多设置：受众与长度</summary>
 
-<label for="length">文案长度</label>
-<select id="length">
-  <option value="short">短：约 60—100 字</option>
-  <option value="medium" selected>中：约 180—300 字</option>
-  <option value="long">长：约 400—650 字</option>
-</select>
+  <div class="advanced-settings-content">
+    <label for="audience">目标受众</label>
+    <input
+      id="audience"
+      type="text"
+      maxlength="100"
+      value="普通用户"
+      placeholder="例如：20—30 岁职场女性"
+    >
+
+    <label for="length">文案长度</label>
+    <select id="length">
+      <option value="short">短：约 60—100 字</option>
+      <option value="medium" selected>中：约 180—300 字</option>
+      <option value="long">长：约 400—650 字</option>
+    </select>
+  </div>
+</details>
 
       <button id="generate-button" type="button">生成文案</button>
     </section>
