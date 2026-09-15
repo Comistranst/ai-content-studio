@@ -33,6 +33,7 @@ const copyAllButton = document.getElementById("copy-all-button");
 const copyTitleButton = document.getElementById("copy-title-button");
 const copyBodyButton = document.getElementById("copy-body-button");
 
+const optimizerPanel = document.getElementById("optimizer-panel");
 const optimizeContentInput = document.getElementById("optimize-content");
 const optimizeGoalSelect = document.getElementById("optimize-goal");
 const optimizeButton = document.getElementById("optimize-button");
@@ -245,7 +246,14 @@ function renderGeneratedContent(data) {
   copyBodyButton.disabled = false;
   saveAsProjectButton.disabled = false;
 }
+function openOptimizerPanel() {
+  optimizerPanel.open = true;
 
+  optimizerPanel.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
 function setOptimizeMessage(message) {
   optimizeEmptyState.textContent = message;
   optimizeEmptyState.hidden = false;
@@ -1207,6 +1215,8 @@ useGeneratedContentButton.addEventListener("click", () => {
     .filter(Boolean)
     .join("\n\n");
 
+  openOptimizerPanel();
+
   optimizeContentInput.value = content;
 
   setOptimizeMessage(
@@ -1287,7 +1297,13 @@ refreshHistoryButton.addEventListener("click", () => {
 loadMoreButton.addEventListener("click", () => {
   loadHistory();
 });
+optimizerPanel.addEventListener("toggle", () => {
+  const action = optimizerPanel.querySelector(
+    ".optimizer-summary-action"
+  );
 
+  action.textContent = optimizerPanel.open ? "收起" : "展开";
+});
 refreshProjectsButton.addEventListener("click", () => {
   loadProjects();
 });

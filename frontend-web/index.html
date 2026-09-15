@@ -142,65 +142,81 @@
   </div>
 </section>
 
-<section class="card optimizer-card">
-  <div class="optimizer-header">
-    <div>
-      <h2>文案优化器</h2>
-      <p class="optimizer-description">
-        粘贴已有文案，选择优化目标，让 AI 帮你改得更好。
-      </p>
+<details id="optimizer-panel" class="card optimizer-card">
+  <summary class="optimizer-summary">
+    <span class="optimizer-summary-text">
+      <strong>文案优化器</strong>
+      <small>粘贴文案或使用刚生成的结果进行优化</small>
+    </span>
+
+    <span class="optimizer-summary-action">展开</span>
+  </summary>
+
+  <div class="optimizer-panel-content">
+    <div class="optimizer-header">
+      <div>
+        <h2 class="visually-hidden">文案优化器</h2>
+        <p class="optimizer-description">
+          选择优化目标后，AI 会生成一份新的优化版本。
+        </p>
+      </div>
+
+      <button id="use-generated-content-button" type="button">
+        使用当前生成结果
+      </button>
     </div>
-    <button id="use-generated-content-button" type="button">
-      使用当前生成结果
-    </button>
-  </div>
 
-  <label for="optimize-content">待优化文案</label>
-  <textarea
-    id="optimize-content"
-    rows="8"
-    maxlength="5000"
-    placeholder="粘贴一段你想优化的文案"
-  ></textarea>
+    <label for="optimize-content">待优化文案</label>
+    <textarea
+      id="optimize-content"
+      rows="8"
+      maxlength="5000"
+      placeholder="粘贴一段你想优化的文案"
+    ></textarea>
 
-  <label for="optimize-goal">优化目标</label>
-  <select id="optimize-goal">
-    <option value="更简洁" selected>更简洁</option>
-    <option value="更有吸引力">更有吸引力</option>
-    <option value="更专业">更专业</option>
-    <option value="更适合小红书">更适合小红书</option>
-  </select>
+    <label for="optimize-goal">优化目标</label>
+    <select id="optimize-goal">
+      <option value="更简洁" selected>更简洁</option>
+      <option value="更有吸引力">更有吸引力</option>
+      <option value="更专业">更专业</option>
+      <option value="更适合小红书">更适合小红书</option>
+    </select>
 
-  <button id="optimize-button" type="button">优化文案</button>
+    <button id="optimize-button" type="button">优化文案</button>
 
-  <div id="optimize-empty-state" class="result-empty-state">
-    粘贴文案后，选择优化目标并点击“优化文案”。
-  </div>
+    <div id="optimize-empty-state" class="result-empty-state">
+      粘贴文案后，选择优化目标并点击“优化文案”。
+    </div>
 
-  <div id="optimize-result-content" class="result-content" hidden>
-  <div class="result-section">
-    <div class="result-section-header">
-      <h3>优化结果</h3>
+    <div id="optimize-result-content" class="result-content" hidden>
+      <div class="result-section">
+        <div class="result-section-header">
+          <h3>优化结果</h3>
 
-      <div class="result-header-actions">
-        <button
-          id="save-optimized-version-button"
-          type="button"
-          disabled
-        >
-          保存为项目版本
-        </button>
+          <div class="result-header-actions">
+            <button
+              id="save-optimized-version-button"
+              type="button"
+              disabled
+            >
+              保存为项目版本
+            </button>
 
-        <button id="copy-optimized-button" type="button" disabled>
-          复制优化结果
-        </button>
+            <button
+              id="copy-optimized-button"
+              type="button"
+              disabled
+            >
+              复制优化结果
+            </button>
+          </div>
+        </div>
+
+        <p id="optimized-content" class="result-body"></p>
       </div>
     </div>
-
-    <p id="optimized-content" class="result-body"></p>
   </div>
-</div>
-</section>
+</details>
 </div>
 <div id="projects-view" hidden></div>
 <section class="card projects-card">
